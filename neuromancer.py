@@ -23,9 +23,30 @@ HAUT_DEFAUT = 16
 COL_D_DEFAUT = 95
 
 
+def _trace(message):
+    """Ecrit une trace immediatement sur la partition de boot.
+
+    Le journal habituel peut rester en cache et se perdre quand le Pi est
+    debranche sans arret propre. Ici on ecrit et on force le vidage, sur une
+    partition FAT lisible depuis n'importe quel PC.
+    """
+    logging.info('[neuromancer] %s' % message)
+    for dossier in ('/boot/firmware', '/boot'):
+        if not os.path.isdir(dossier):
+            continue
+        try:
+            with open(os.path.join(dossier, 'neuromancer-trace.txt'), 'a') as f:
+                f.write('%s  %s\n' % (time.strftime('%Y-%m-%d %H:%M:%S'), message))
+                f.flush()
+                os.fsync(f.fileno())
+        except Exception:
+            pass
+        break
+
+
 class Neuromancer(plugins.Plugin):
     __author__ = 'wackojice'
-    __version__ = '3.0.1'
+    __version__ = '3.0.2'
     __license__ = 'GPL3'
     __description__ = 'Visages et voix Neuromancer + ecran ICE BROKEN, layout adaptatif'
 
@@ -82,8 +103,8 @@ class Neuromancer(plugins.Plugin):
             self.images = {}
             return
 
-        logging.info('[neuromancer] %d images chargees : %s'
-                     % (len(self.images), ', '.join(sorted(self.images))))
+        _trace('on_loaded : %d images chargees (%s)'
+               % (len(self.images), ', '.join(sorted(self.images))))
 
     # ---------------------------------------------------------------- interface
 
@@ -129,11 +150,13 @@ class Neuromancer(plugins.Plugin):
         if COL_D is None:
             self.col_d = MARGE_X + self.images[self.DEFAUT].width + GOUTTIERE
 
-        logging.info('[neuromancer] ecran %dx%d, portrait en (%d,%d), texte en x=%d'
-                     % (largeur, layout['height'], MARGE_X, self.haut, self.col_d))
+        _trace('layout : ecran %dx%d, portrait en (%d,%d), texte en x=%d'
+               % (largeur, layout['height'], MARGE_X, self.haut, self.col_d))
 
     def on_ui_setup(self, ui):
+        _trace('on_ui_setup appele')
         if not self.images:
+            _trace('on_ui_setup : aucune image, abandon')
             return
 
         self._calculer_layout(ui)
@@ -159,6 +182,7 @@ class Neuromancer(plugins.Plugin):
         # etre redimensionnee pour l'ecran
         self.bitmap.image = self.images[self.DEFAUT]
         ui.add_element('nm_face', self.bitmap)
+        _trace('element nm_face ajoute')
 
         ui.add_element('nm_statut', LabeledValue(
             color=0, label='', value='', position=(self.col_d, self.haut + 46),
@@ -211,6 +235,8 @@ class Neuromancer(plugins.Plugin):
         # un refresh e-ink coute ~2 s : on ne repeint que sur changement reel
         if voulu == self.affiche:
             return
+        if self.affiche is None:
+            _trace('premier rendu : image %s' % voulu)
         self.affiche = voulu
 
         self.bitmap.image = self.images[voulu]

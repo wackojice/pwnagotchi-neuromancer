@@ -42,6 +42,7 @@ DOSSIER_PLUGINS="${DOSSIER_PLUGINS:-/usr/local/share/pwnagotchi/custom-plugins/}
 echo "==> Installation du plugin dans $DOSSIER_PLUGINS"
 mkdir -p "$DOSSIER_PLUGINS"
 cp "$SOURCE/neuromancer.py" "$DOSSIER_PLUGINS/"
+rm -rf "$DOSSIER_PLUGINS/__pycache__"
 # retire un exemplaire laisse dans l'autre emplacement possible
 for autre in /usr/local/share/pwnagotchi/custom-plugins /etc/pwnagotchi/custom-plugins; do
     if [[ "$autre" != "${DOSSIER_PLUGINS%/}" && -f "$autre/neuromancer.py" ]]; then

@@ -54,6 +54,8 @@ DEST_PLUG="$RACINE_SD/${CHEMIN_PLUG#/}"
 echo "==> Plugin -> $CHEMIN_PLUG"
 mkdir -p "$DEST_PLUG"
 cp "$SOURCE/neuromancer.py" "$DEST_PLUG/"
+# le bytecode compile d'une version precedente doit disparaitre
+rm -rf "$DEST_PLUG/__pycache__"
 # nettoyage d'un exemplaire laisse dans l'autre emplacement possible
 for autre in "$RACINE_SD/usr/local/share/pwnagotchi/custom-plugins" \
              "$RACINE_SD/etc/pwnagotchi/custom-plugins"; do
