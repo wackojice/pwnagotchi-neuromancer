@@ -49,7 +49,7 @@ DEMO = {
     'channel': ('CH', '11', 0, 5),
     'aps': ('NODES', '9 (19)', 40, 12),
     'uptime': ('UP', '00:09:13', 185, 5),
-    'shakes': ('ICE', '1 (12)', 0, 8),
+    'shakes': ('PWND', '1 (12)', 0, 8),
     'mode': ('AUTO', '', 225, 0),
     'name': 'Case>',
     'deck': 'DECK 44C',

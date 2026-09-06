@@ -65,9 +65,10 @@ class Neuromancer(plugins.Plugin):
     # plus long doit etre accompagne d'un decalage et d'un espacement elargi,
     # sinon sa valeur vient mordre dessus. C'est deja le cas en standard, ou
     # 'CH 11' touche 'APS'.
+    # 'shakes' garde volontairement PWND : c'est le compteur que toute la
+    # communaute pwnagotchi reconnait, le renommer nuirait a la lisibilite.
     LIBELLES = {
         'aps': ('NODES', 40, 12),
-        'shakes': ('ICE', None, 8),
     }
 
     DECK_TEMPERATURE = True   # afficher la temperature du Pi

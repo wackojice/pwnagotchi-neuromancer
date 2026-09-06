@@ -95,10 +95,12 @@ Le plugin réécrit aussi les libellés de l'interface dans le lexique du roman 
 | pwnagotchi | Neuromancer |
 |---|---|
 | `APS 9 (19)` | `NODES 9 (19)` |
-| `PWND 1 (12)` | `ICE 1 (12)` |
 
-`UP` et `CH` restent tels quels : l'élément d'uptime est déjà en `x = 185` sur
-un écran de 250 px et un libellé plus long déborderait.
+`PWND` reste : c'est le compteur que toute la communauté pwnagotchi reconnaît,
+et le renommer coûterait plus en lisibilité que ça ne rapporterait en style.
+`ICE BROKEN` garde son sens sur l'écran de capture, où le contexte est
+explicite. `UP` et `CH` restent également : l'élément d'uptime est déjà en
+`x = 185` sur un écran de 250 px et un libellé plus long déborderait.
 
 Ce renommage corrige au passage un défaut d'affichage de pwnagotchi. Un
 `LabeledValue` place sa valeur à `x + espacement + 5 × len(libellé)`, en
