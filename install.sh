@@ -32,10 +32,10 @@ echo "==> Installation des images dans $DOSSIER_IMAGES"
 mkdir -p "$DOSSIER_IMAGES"
 cp "$SOURCE"/images/*.png "$DOSSIER_IMAGES/"
 
-DOSSIER_PLUGINS="$(grep -hoP '^\s*main\.custom_plugins\s*=\s*"\K[^"]+' "$CONFIG" 2>/dev/null | head -1)"
+DOSSIER_PLUGINS="$(grep -hoP '^\s*main\.custom_plugins\s*=\s*"\K[^"]+' "$CONFIG" 2>/dev/null | head -1 || true)"
 if [[ -z "$DOSSIER_PLUGINS" ]]; then
-    DEFAUTS="$(find / -maxdepth 9 -name 'defaults.toml' -path '*pwnagotchi*' -not -path '*/proc/*' 2>/dev/null | head -1)"
-    DOSSIER_PLUGINS="$(grep -hoP '^\s*main\.custom_plugins\s*=\s*"\K[^"]+' "$DEFAUTS" 2>/dev/null | head -1)"
+    DEFAUTS="$(find / -maxdepth 9 -name 'defaults.toml' -path '*pwnagotchi*' -not -path '*/proc/*' 2>/dev/null | head -1 || true)"
+    DOSSIER_PLUGINS="$(grep -hoP '^\s*main\.custom_plugins\s*=\s*"\K[^"]+' "$DEFAUTS" 2>/dev/null | head -1 || true)"
 fi
 DOSSIER_PLUGINS="${DOSSIER_PLUGINS:-/usr/local/share/pwnagotchi/custom-plugins/}"
 
@@ -64,7 +64,7 @@ do
     if [[ -n "$candidat" && -d "$candidat" ]]; then LOCALE_PWN="$candidat"; break; fi
 done
 if [[ -z "$LOCALE_PWN" ]]; then
-    LOCALE_PWN="$(find / -maxdepth 8 -type d -path '*pwnagotchi/locale' -not -path '*/proc/*' 2>/dev/null | head -1)"
+    LOCALE_PWN="$(find / -maxdepth 8 -type d -path '*pwnagotchi/locale' -not -path '*/proc/*' 2>/dev/null | head -1 || true)"
 fi
 if [[ -n "$LOCALE_PWN" && -d "$LOCALE_PWN" ]]; then
     mkdir -p "$LOCALE_PWN/neuromancer/LC_MESSAGES"

@@ -44,10 +44,10 @@ cp "$SOURCE"/images/*.png "$DEST_IMG/"
 # /usr/local/share/pwnagotchi/custom-plugins/ sur les 2.x, et
 # /etc/pwnagotchi/custom-plugins/ sur les forks recents. On le lit plutot que
 # de le deviner : d'abord la config de l'utilisateur, puis les defauts livres.
-CHEMIN_PLUG="$(grep -hoP '^\s*main\.custom_plugins\s*=\s*"\K[^"]+' "$CONFIG" 2>/dev/null | head -1)"
+CHEMIN_PLUG="$(grep -hoP '^\s*main\.custom_plugins\s*=\s*"\K[^"]+' "$CONFIG" 2>/dev/null | head -1 || true)"
 if [[ -z "$CHEMIN_PLUG" ]]; then
-    DEFAUTS="$(find "$RACINE_SD" -maxdepth 9 -name 'defaults.toml' -path '*pwnagotchi*' 2>/dev/null | head -1)"
-    CHEMIN_PLUG="$(grep -hoP '^\s*main\.custom_plugins\s*=\s*"\K[^"]+' "$DEFAUTS" 2>/dev/null | head -1)"
+    DEFAUTS="$(find "$RACINE_SD" -maxdepth 9 -name 'defaults.toml' -path '*pwnagotchi*' 2>/dev/null | head -1 || true)"
+    CHEMIN_PLUG="$(grep -hoP '^\s*main\.custom_plugins\s*=\s*"\K[^"]+' "$DEFAUTS" 2>/dev/null | head -1 || true)"
 fi
 CHEMIN_PLUG="${CHEMIN_PLUG:-/usr/local/share/pwnagotchi/custom-plugins/}"
 DEST_PLUG="$RACINE_SD/${CHEMIN_PLUG#/}"
@@ -67,7 +67,7 @@ done
 
 # --- voix : le paquet vit souvent dans un venv
 echo "==> Voix Neuromancer"
-LOCALE_PWN="$(find "$RACINE_SD" -maxdepth 9 -type d -path '*pwnagotchi/locale' 2>/dev/null | head -1)"
+LOCALE_PWN="$(find "$RACINE_SD" -maxdepth 9 -type d -path '*pwnagotchi/locale' 2>/dev/null | head -1 || true)"
 if [[ -n "$LOCALE_PWN" ]]; then
     mkdir -p "$LOCALE_PWN/neuromancer/LC_MESSAGES"
     cp "$SOURCE/locale/neuromancer/LC_MESSAGES/voice.mo" "$LOCALE_PWN/neuromancer/LC_MESSAGES/"
