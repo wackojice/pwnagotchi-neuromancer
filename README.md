@@ -86,6 +86,40 @@ Toutes les images font 76-77 × 80, en **1 bit pur**, sans anti-aliasing.
 Le `MAPPING` en haut du plugin se réorganise librement : plusieurs états peuvent
 pointer vers la même image, et `awake.png` sert de repli pour tout état non prévu.
 
+## La voix
+
+Le thème ne change pas que les visages : il installe une **locale complète**
+qui réécrit les 104 répliques de pwnagotchi dans l'univers de Gibson.
+
+| pwnagotchi | Neuromancer |
+|---|---|
+| `Hi, I'm Pwnagotchi! Starting ...` | `Case online. Jacking in...` |
+| `Hack the Planet!` | `Burn the ICE.` |
+| `I'm bored ...` | `Static. Nothing but static.` |
+| `I pwn therefore I am.` | `I break ICE, therefore I am.` |
+| `I dreamed of electric sheep` | `I dreamed of Wintermute` |
+| `Cool, we got 3 new handshakes!` | `ICE BROKEN. 3 keys.` |
+| `It's a trap! {mac}` | `Black ICE for {mac}!` |
+| `I'm dead, Jim!` | `I flatlined.` |
+
+C'est du **gettext standard** : aucune ligne de pwnagotchi n'est modifiée. La
+locale s'installe à côté des 184 autres et s'active par une ligne de config —
+
+```toml
+main.lang = "neuromancer"
+```
+
+— et se désactive en revenant à `main.lang = "en"`.
+
+Les répliques tiennent toutes en 40 caractères, la limite d'affichage du statut
+(20 caractères par ligne, deux lignes). Pour les modifier :
+
+```bash
+$EDITOR locale/neuromancer/LC_MESSAGES/voice.po
+msgfmt -o locale/neuromancer/LC_MESSAGES/voice.mo \
+       locale/neuromancer/LC_MESSAGES/voice.po
+```
+
 ## Réglages
 
 En haut de `neuromancer.py` :

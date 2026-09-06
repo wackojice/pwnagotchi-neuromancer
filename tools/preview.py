@@ -13,8 +13,10 @@ Les sorties vont dans preview/ (ignore par git).
 """
 
 import argparse
+import gettext
 import os
 import sys
+from textwrap import TextWrapper
 
 from PIL import Image, ImageDraw, ImageFont
 
@@ -37,6 +39,7 @@ POS = {
 # --- constantes du plugin (neuromancer.py)
 HAUT = 16
 COL_D = 95
+MAX_STATUT = 20   # layout['status']['max'] du driver V2
 PORTRAIT_X = 6
 
 # --- textes d'exemple
@@ -44,11 +47,38 @@ DEMO = {
     'channel': 'CH 11',
     'aps': 'APS 11 (25)',
     'uptime': 'UP 00:09',
-    'shakes': 'PWND 0 (12)',
+    'shakes': 'PWND 3 (12)',
     'mode': 'AUTO',
     'name': 'wackogotchi>',
-    'status': "Hi! I'm Case",
 }
+
+# une replique par etat, tiree de la vraie locale neuromancer
+REPLIQUES = {
+    'awake':  "Sniff. Deauth. Repeat.",
+    'happy':  "I'm living the life!",
+    'look_l': "So many networks!!!",
+    'look_r': "Associating to {what}",
+    'sleep':  "I dreamed of electric sheep",
+    'ice':    "Cool, we got {num} new handshake{plural}!",
+}
+
+
+def charger_voix():
+    """Charge la locale neuromancer du depot, avec repli sur l'anglais."""
+    chemin = os.path.join(RACINE, 'locale')
+    try:
+        t = gettext.translation('voice', chemin, languages=['neuromancer'])
+        return t.gettext
+    except OSError:
+        print('  ! locale neuromancer absente, textes en anglais')
+        return lambda s: s
+
+
+def statut(etat, _):
+    """Rend la replique de cet etat, placeholders remplis."""
+    brut = _(REPLIQUES.get(etat, "Sniff. Deauth. Repeat."))
+    return brut.format(what='LINKSYS_5G', num=3, plural='s',
+                       secs=30, name='pwny42', mac='AA:BB:CC')
 
 
 def charger_polices():
@@ -77,7 +107,7 @@ def charger_polices():
     sys.exit('Aucune police monospace utilisable trouvee.')
 
 
-def composer(etat, polices, ssid='LINKSYS_5G'):
+def composer(etat, polices, _, ssid='LINKSYS_5G'):
     """Rend un ecran complet pour un etat donne."""
     ecran = Image.new('1', (LARGEUR, HAUTEUR), 1)   # 1 = blanc
     d = ImageDraw.Draw(ecran)
@@ -101,7 +131,13 @@ def composer(etat, polices, ssid='LINKSYS_5G'):
 
     # colonne de droite
     d.text((COL_D, 16), DEMO['name'], font=polices['bold'], fill=0)
-    d.text((COL_D, 34), DEMO['status'], font=polices['medium'], fill=0)
+    # pwnagotchi enveloppe le statut avec TextWrapper(width=20)
+    texte = statut(etat, _)
+    lignes = TextWrapper(width=MAX_STATUT, replace_whitespace=False).wrap(texte)
+    y = 34
+    for ligne in lignes[:2]:
+        d.text((COL_D, y), ligne, font=polices['medium'], fill=0)
+        y += 12
 
     # lignes ajoutees par le plugin, remplies seulement en mode ice
     if etat == 'ice':
@@ -125,13 +161,14 @@ def main():
 
     os.makedirs(SORTIE, exist_ok=True)
     polices = charger_polices()
+    _ = charger_voix()
 
     etats = ([args.etat] if args.etat else
              sorted(f[:-4] for f in os.listdir(IMAGES) if f.endswith('.png')))
 
     rendus = []
     for etat in etats:
-        img = composer(etat, polices)
+        img = composer(etat, polices, _)
         chemin = os.path.join(SORTIE, 'ecran_%s.png' % etat)
         agrandir(img, args.zoom).save(chemin)
         print('  %-8s -> %s' % (etat, os.path.relpath(chemin, RACINE)))

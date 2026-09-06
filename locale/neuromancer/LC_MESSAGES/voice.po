@@ -1,0 +1,325 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: pwnagotchi-neuromancer\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-09-05 00:00+0000\n"
+"PO-Revision-Date: 2026-09-05 00:00+0000\n"
+"Last-Translator: wackojice\n"
+"Language-Team: Neuromancer\n"
+"Language: neuromancer\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "ZzzzZZzzzzZzzz"
+msgstr "deck cold. dreaming."
+
+msgid "Hi, I'm Pwnagotchi! Starting ..."
+msgstr "Case online. Jacking in..."
+
+msgid "New day, new hunt, new pwns!"
+msgstr "New run on the grid."
+
+msgid "Hack the Planet!"
+msgstr "Burn the ICE."
+
+msgid "No more mister Wi-Fi!!"
+msgstr "No more mister nice deck."
+
+msgid "Pretty fly 4 a Wi-Fi!"
+msgstr "Console cowboy, riding."
+
+msgid "Sniff. Deauth. Repeat."
+msgstr "Sniff. Break. Repeat."
+
+msgid "Good Pwning!"
+msgstr "Good hunting, cowboy."
+
+msgid "Ensign, Engage!"
+msgstr "Deck's hot. Go."
+
+msgid "Free your Wi-Fi!"
+msgstr "Free the data."
+
+msgid "Chevron Seven, locked."
+msgstr "Straylight, locked on."
+
+msgid "May the Wi-fi be with you"
+msgstr "The matrix provides."
+
+msgid "Generating keys, do not turn off ..."
+msgstr "Cutting keys. Hold still."
+
+msgid "Are you the keymaster?"
+msgstr "You holding the codes?"
+
+msgid "I am the keymaster!"
+msgstr "I cut my own keys."
+
+msgid "Hey, channel {channel} is free! Your AP will say thanks."
+msgstr "Channel {channel} is wide open."
+
+msgid "Reading last session logs ..."
+msgstr "Reading the old runs..."
+
+msgid "Read {lines_so_far} log lines so far ..."
+msgstr "{lines_so_far} lines of memory..."
+
+msgid "I'm bored ..."
+msgstr "Static. Nothing but static."
+
+msgid "Let's go for a walk!"
+msgstr "Let's hit the Sprawl."
+
+msgid "This is the best day of my life!"
+msgstr "Best run of my life."
+
+msgid "All your base are belong to us"
+msgstr "This grid is mine now."
+
+msgid "Fascinating!"
+msgstr "Curious architecture."
+
+msgid "Shitty day :/"
+msgstr "Bad day in Chiba."
+
+msgid "I'm extremely bored ..."
+msgstr "Flatlined. Pure boredom."
+
+msgid "I'm very sad ..."
+msgstr "The sky is dead channel."
+
+msgid "I'm sad"
+msgstr "Cold out here."
+
+msgid "I'm so happy ..."
+msgstr "Riding the high."
+
+msgid "Life? Don't talk to me about life."
+msgstr "Meat life. Don't ask."
+
+msgid "Leave me alone ..."
+msgstr "Jack out. Leave me."
+
+msgid "I'm mad at you!"
+msgstr "You burned me."
+
+msgid "I'm living the life!"
+msgstr "Living in the matrix!"
+
+msgid "I pwn therefore I am."
+msgstr "I break ICE, therefore I am."
+
+msgid "So many networks!!!"
+msgstr "So much data out there!"
+
+msgid "I'm having so much fun!"
+msgstr "This deck sings."
+
+msgid "It's a Wi-Fi system! I know this!"
+msgstr "It's a grid! I know this!"
+
+msgid "My crime is that of curiosity ..."
+msgstr "My crime was curiosity."
+
+msgid "Hello {name}! Nice to meet you."
+msgstr "{name}. New cowboy on the grid."
+
+msgid "Yo {name}! Sup?"
+msgstr "Yo {name}, running hot?"
+
+msgid "Hey {name} how are you doing?"
+msgstr "{name}, how's the deck?"
+
+msgid "Unit {name} is nearby!"
+msgstr "{name} is on this sector."
+
+msgid "Uhm ... goodbye {name}"
+msgstr "{name} jacked out."
+
+msgid "{name} is gone ..."
+msgstr "{name} flatlined off grid."
+
+msgid "Whoops ... {name} is gone."
+msgstr "Lost {name} in the static."
+
+msgid "{name} missed!"
+msgstr "{name} slipped away."
+
+msgid "Missed!"
+msgstr "Ghosted."
+
+msgid "Good friends are a blessing!"
+msgstr "Good cowboys are rare."
+
+msgid "I love my friends!"
+msgstr "My crew runs deep."
+
+msgid "Nobody wants to play with me ..."
+msgstr "No one runs with me."
+
+msgid "I feel so alone ..."
+msgstr "Alone in the matrix."
+
+msgid "Let's find friends"
+msgstr "Find me a crew."
+
+msgid "Where's everybody?!"
+msgstr "Grid's empty tonight."
+
+msgid "Napping for {secs}s ..."
+msgstr "Jacked out {secs}s..."
+
+msgid "Zzzzz"
+msgstr "Offline."
+
+msgid "Snoring ..."
+msgstr "Deck idling..."
+
+msgid "ZzzZzzz ({secs}s)"
+msgstr "Dark for {secs}s"
+
+msgid "Good night."
+msgstr "Jack out. Good night."
+
+msgid "Zzz"
+msgstr "Dark."
+
+msgid "I dreamed of electric sheep"
+msgstr "I dreamed of Wintermute"
+
+msgid "Waiting for {secs}s ..."
+msgstr "Holding {secs}s..."
+
+msgid "Looking around ({secs}s)"
+msgstr "Scanning the grid ({secs}s)"
+
+msgid "Hey {what} let's be friends!"
+msgstr "{what}, open up."
+
+msgid "Associating to {what}"
+msgstr "Probing {what}"
+
+msgid "Yo {what}!"
+msgstr "Yo {what}!"
+
+msgid "Hello there, {what}"
+msgstr "Knocking on {what}"
+
+msgid "Mind if I join, {what}?"
+msgstr "Let me in, {what}"
+
+msgid "Rise and Shine Mr. {what}!"
+msgstr "Wake up, {what}."
+
+msgid "Just decided that {mac} needs no Wi-Fi!"
+msgstr "{mac} is cut from the grid."
+
+msgid "Deauthenticating {mac}"
+msgstr "Flatlining {mac}"
+
+msgid "No more Wi-Fi for {mac}"
+msgstr "{mac} goes dark."
+
+msgid "It's a trap! {mac}"
+msgstr "Black ICE for {mac}!"
+
+msgid "Consider yourself unplugged, {mac}"
+msgstr "You're jacked out, {mac}"
+
+msgid "Hasta la vista, {mac}"
+msgstr "Burned, {mac}."
+
+msgid "You shall not pass, {mac}"
+msgstr "Denied, {mac}."
+
+msgid "Kickbanning {mac}!"
+msgstr "Wiping {mac}!"
+
+msgid "Cool, we got {num} new handshake{plural}!"
+msgstr "ICE BROKEN. {num} key{plural}."
+
+msgid "You have {count} new message{plural}!"
+msgstr "{count} message{plural} on the deck."
+
+msgid "Oops, something went wrong ... Rebooting ..."
+msgstr "Deck crashed. Rebooting..."
+
+msgid "Well, this is awkward."
+msgstr "That went badly."
+
+msgid "Tell my packets I love them."
+msgstr "Tell my packets I loved them."
+
+msgid "Have you tried turning it off and on again?"
+msgstr "Try cycling the deck."
+
+msgid "I'm afraid Dave"
+msgstr "I'm afraid, Dixie."
+
+msgid "I'm dead, Jim!"
+msgstr "I flatlined."
+
+msgid "I have a bad feeling about this"
+msgstr "Black ICE. I feel it."
+
+msgid "You did this."
+msgstr "You did this."
+
+msgid "Uploading data to {to} ..."
+msgstr "Feeding {to}..."
+
+msgid "Beam me up to {to}"
+msgstr "Dumping to {to}"
+
+msgid "Engage warp drive, {to}"
+msgstr "Burn it to {to}"
+
+msgid "Gift-wrapping data for {to}"
+msgstr "Packaging for {to}"
+
+msgid "Please wait, magic happening at {to}"
+msgstr "{to} is working..."
+
+msgid "Downloading from {name} ..."
+msgstr "Pulling from {name}..."
+
+msgid "Kicked {num} stations\n"
+msgstr "Flatlined {num} nodes\n"
+
+msgid "Made >999 new friends\n"
+msgstr "Met >999 cowboys\n"
+
+msgid "Made {num} new friends\n"
+msgstr "Met {num} cowboys\n"
+
+msgid "Got {num} handshakes\n"
+msgstr "Broke {num} ICE\n"
+
+msgid "Met 1 peer"
+msgstr "Met 1 cowboy"
+
+msgid "Met {num} peers"
+msgstr "Met {num} cowboys"
+
+msgid "I've been pwning for {duration} and kicked {deauthed} clients! I've also met {associated} new friends and ate {handshakes} handshakes! #pwnagotchi #pwnlog #pwnlife #hacktheplanet #skynet"
+msgstr "Ran the grid for {duration}. Flatlined {deauthed} nodes, met {associated} cowboys, broke {handshakes} ICE. #pwnagotchi #neuromancer #hacktheplanet"
+
+msgid "hours"
+msgstr "hours"
+
+msgid "minutes"
+msgstr "minutes"
+
+msgid "seconds"
+msgstr "seconds"
+
+msgid "hour"
+msgstr "hour"
+
+msgid "minute"
+msgstr "minute"
+
+msgid "second"
+msgstr "second"

@@ -34,6 +34,18 @@ echo "==> Installation du plugin dans $DOSSIER_PLUGINS"
 mkdir -p "$DOSSIER_PLUGINS"
 cp "$SOURCE/neuromancer.py" "$DOSSIER_PLUGINS/"
 
+echo "==> Installation de la voix Neuromancer"
+LOCALE_PWN="$(python3 -c 'import pwnagotchi, os; print(os.path.join(os.path.dirname(pwnagotchi.__file__), "locale"))' 2>/dev/null || true)"
+if [[ -n "$LOCALE_PWN" && -d "$LOCALE_PWN" ]]; then
+    mkdir -p "$LOCALE_PWN/neuromancer/LC_MESSAGES"
+    cp "$SOURCE/locale/neuromancer/LC_MESSAGES/voice.mo" "$LOCALE_PWN/neuromancer/LC_MESSAGES/"
+    echo "  voix installee dans $LOCALE_PWN/neuromancer"
+    VOIX_OK=1
+else
+    echo "  ! dossier locale de pwnagotchi introuvable, voix non installee" >&2
+    VOIX_OK=0
+fi
+
 echo "==> Activation dans $CONFIG"
 if [[ ! -f "$CONFIG" ]]; then
     echo "  $CONFIG introuvable — active le plugin a la main :" >&2
@@ -45,6 +57,16 @@ else
     cp "$CONFIG" "$CONFIG.bak.$(date +%s)"
     printf '\nmain.plugins.neuromancer.enabled = true\n' >> "$CONFIG"
     echo "  ligne ajoutee (sauvegarde : $CONFIG.bak.*)"
+fi
+
+if [[ "${VOIX_OK:-0}" == "1" ]]; then
+    if grep -qE '^main\.lang' "$CONFIG" 2>/dev/null; then
+        sed -i 's/^main\.lang.*/main.lang = "neuromancer"/' "$CONFIG"
+        echo "  langue basculee sur neuromancer"
+    else
+        printf 'main.lang = "neuromancer"\n' >> "$CONFIG"
+        echo "  langue neuromancer ajoutee"
+    fi
 fi
 
 echo "==> Redemarrage du service"
