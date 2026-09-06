@@ -12,25 +12,24 @@ import pwnagotchi.ui.fonts as fonts
 from pwnagotchi.ui.components import Bitmap, LabeledValue, Text
 
 
-# Par defaut, le plugin deduit ces valeurs du layout de l'ecran detecte, ce qui
-# le rend utilisable sur n'importe quel driver. Mettre un entier a la place de
-# None pour forcer une valeur.
-HAUT = None    # sommet du portrait ; auto = juste sous le filet du haut
-COL_D = None   # colonne de texte de droite ; auto = apres le portrait
-MARGE_X = 6    # decalage du portrait depuis le bord gauche
-GOUTTIERE = 13 # espace entre le portrait et la colonne de texte
+# By default the plugin derives these from the detected screen layout, which
+# makes it work on any driver. Put an integer instead of None to force a value.
+TOP = None      # top of the portrait; auto = just below the top rule
+COL_R = None    # right-hand text column; auto = right after the portrait
+MARGIN_X = 6    # portrait offset from the left edge
+GUTTER = 13     # gap between the portrait and the text column
 
-# valeurs de repli si le layout n'est pas lisible (calees sur waveshare2in13_V2)
-HAUT_DEFAUT = 16
-COL_D_DEFAUT = 95
+# fallbacks when the layout cannot be read (tuned for waveshare2in13_V2)
+TOP_DEFAULT = 16
+COL_R_DEFAULT = 95
 
 
 def _trace(message):
-    """Ecrit une trace immediatement sur la partition de boot.
+    """Write a trace line straight to the boot partition.
 
-    Le journal habituel peut rester en cache et se perdre quand le Pi est
-    debranche sans arret propre. Ici on ecrit et on force le vidage, sur une
-    partition FAT lisible depuis n'importe quel PC.
+    The usual journal can sit in cache and vanish when the pi is unplugged
+    without a clean shutdown. Here we write and force a flush, onto a FAT
+    partition readable from any computer.
     """
     logging.info('[neuromancer] %s' % message)
     for dossier in ('/boot/firmware', '/boot'):
@@ -48,35 +47,34 @@ def _trace(message):
 
 class Neuromancer(plugins.Plugin):
     __author__ = 'wackojice'
-    __version__ = '3.4.0'
+    __version__ = '3.5.0'
     __license__ = 'GPL3'
-    __description__ = 'Visages et voix Neuromancer + ecran ICE BROKEN, layout adaptatif'
+    __description__ = 'Neuromancer faces and voice, ICE BROKEN screen, adaptive layout'
 
-    DOSSIER = '/usr/local/share/neuromancer'
-    DUREE_PWN = 8          # secondes d'affichage apres un handshake
-    DUREE_PHRASE = 6       # duree minimale d'affichage d'une replique
-    LARGEUR_PHRASE = 20    # caracteres par ligne avant retour a la ligne
-    FILE_MAX = 3           # repliques en attente au maximum
+    FOLDER = '/usr/local/share/neuromancer'
+    PWN_SECONDS = 8         # seconds the ICE BROKEN screen stays up
+    LINE_SECONDS = 6        # minimum seconds a line stays readable
+    LINE_WIDTH = 20         # characters per line before wrapping
+    QUEUE_MAX = 3           # lines held in the queue at most
 
-    # Renomme les libelles du bandeau dans le lexique de Gibson.
-    # Chaque entree : element -> (libelle, abscisse ou None, espacement ou None)
-    # LabeledValue place sa valeur a x + espacement + 5*len(libelle), en
-    # comptant 5 px par caractere alors que la police en fait 6 : un libelle
-    # plus long doit etre accompagne d'un decalage et d'un espacement elargi,
-    # sinon sa valeur vient mordre dessus. C'est deja le cas en standard, ou
-    # 'CH 11' touche 'APS'.
-    # 'shakes' garde volontairement PWND : c'est le compteur que toute la
-    # communaute pwnagotchi reconnait, le renommer nuirait a la lisibilite.
-    LIBELLES = {
+    # Status-bar labels rewritten into Gibson's vocabulary.
+    # Each entry: element -> (label, x or None, spacing or None)
+    # LabeledValue places its value at x + spacing + 5*len(label), counting
+    # 5 px per character while the font is 6 px wide: a longer label needs both
+    # a shift and wider spacing, otherwise its value creeps back over it. That
+    # already happens in stock pwnagotchi, where 'CH 11' touches 'APS'.
+    # 'shakes' deliberately keeps PWND: it is the counter the whole pwnagotchi
+    # community recognises, and renaming it would hurt clarity.
+    LABELS = {
         'aps': ('NODES', 40, 12),
     }
 
-    DECK_TEMPERATURE = True   # afficher la temperature du Pi
-    DECK_INTERVALLE = 30      # secondes entre deux lectures
-    DEFAUT = 'awake'       # image de repli si un etat n'a pas de fichier
+    DECK_TEMPERATURE = True # show the SoC temperature
+    DECK_INTERVAL = 30      # seconds between temperature readings
+    FALLBACK = 'awake'      # fallback image for any unmapped state
 
-    # chaque etat du pwnagotchi -> nom de fichier (sans .png)
-    # plusieurs etats peuvent pointer vers la meme image, c'est voulu
+    # each pwnagotchi state -> file name (without .png)
+    # several states may point at the same image, on purpose
     MAPPING = {
         faces.LOOK_R: 'look_r',
         faces.LOOK_R_HAPPY: 'look_r',
@@ -102,126 +100,126 @@ class Neuromancer(plugins.Plugin):
     def __init__(self):
         self.images = {}
         self.bitmap = None
-        self.jusqua = 0
+        self.until = 0
         self.ssid = ''
-        self.affiche = None     # nom de l'image actuellement posee
-        self.haut = HAUT_DEFAUT
-        self.col_d = COL_D_DEFAUT
-        self.phrase = None      # replique actuellement affichee
-        self.phrase_jusqua = 0  # instant avant lequel on ne la remplace pas
-        self.vue = None         # dernier statut lu chez le coeur
-        self._verrou = threading.Lock()  # on_loaded et on_ui_setup sont concurrents
-        self.deck = ''           # derniere temperature lue
-        self.deck_jusqua = 0     # instant de la prochaine lecture
-        self.file = deque(maxlen=self.FILE_MAX)  # repliques en attente
+        self.shown = None       # name of the image currently placed
+        self.top = TOP_DEFAULT
+        self.col_r = COL_R_DEFAULT
+        self.line = None        # line currently on screen
+        self.line_until = 0     # do not replace it before this instant
+        self.last_seen = None   # last status read from the core
+        self._mutex = threading.Lock()  # on_loaded and on_ui_setup race
+        self.deck = ''          # last temperature read
+        self.deck_until = 0     # instant of the next reading
+        self.queue = deque(maxlen=self.QUEUE_MAX)  # lines waiting their turn
 
     # ---------------------------------------------------------------- chargement
 
-    def _charger_images(self):
-        """Charge les PNG en memoire. Idempotente : ne fait rien si c'est deja fait.
+    def _load_images(self):
+        """Load the PNGs. Idempotent: does nothing if already done.
 
-        pwnagotchi lance on_loaded dans un thread separe pendant que le thread
-        principal construit l'interface : on_ui_setup peut donc s'executer avant
-        que les images soient la. Les deux appellent cette methode.
+        pwnagotchi runs on_loaded in a separate thread while the main thread
+        builds the UI, so on_ui_setup may run before the images exist. Both
+        hooks call this.
         """
-        # les deux hooks tournent dans des threads distincts et peuvent entrer
-        # ici en meme temps : sans verrou, les images sont chargees deux fois
-        with self._verrou:
+        # both hooks run in distinct threads and can enter here at the same
+        # time: without a lock the images get loaded twice
+        with self._mutex:
             if self.images:
                 return
-            self._charger_vraiment()
+            self._load_now()
 
-    def _charger_vraiment(self):
-        noms = set(self.MAPPING.values()) | {'ice', self.DEFAUT}
-        for nom in noms:
-            chemin = os.path.join(self.DOSSIER, nom + '.png')
+    def _load_now(self):
+        names = set(self.MAPPING.values()) | {'ice', self.FALLBACK}
+        for name in names:
+            path = os.path.join(self.FOLDER, name + '.png')
             try:
-                self.images[nom] = Image.open(chemin).convert('1')
+                self.images[name] = Image.open(path).convert('1')
             except Exception as e:
-                logging.warning('[neuromancer] %s absent (%s)' % (chemin, e))
+                logging.warning('[neuromancer] %s missing (%s)' % (path, e))
 
-        if self.DEFAUT not in self.images:
-            logging.error('[neuromancer] %s.png est obligatoire, plugin inactif' % self.DEFAUT)
+        if self.FALLBACK not in self.images:
+            logging.error('[neuromancer] %s.png is required, plugin inactive' % self.FALLBACK)
             self.images = {}
             return
 
-        _trace('%d images chargees (%s)'
+        _trace('%d images loaded (%s)'
                % (len(self.images), ', '.join(sorted(self.images))))
 
     def on_loaded(self):
-        self._charger_images()
+        self._load_images()
 
     # ---------------------------------------------------------------- interface
 
-    def _calculer_layout(self, ui):
-        """Deduit les coordonnees du layout de l'ecran, et adapte les images.
+    def _compute_layout(self, ui):
+        """Derive coordinates from the screen layout and fit the images.
 
-        Cherche les deux filets horizontaux pour connaitre la bande utile, puis
-        redimensionne le portrait s'il n'y tient pas. Retombe sur les valeurs
-        de la 2.13 v2 si le layout n'est pas lisible.
+        Finds the two horizontal rules to get the usable band, then scales the
+        portrait down if it does not fit. Falls back to the 2.13" v2 values
+        when the layout cannot be read.
         """
-        self.haut = HAUT if HAUT is not None else HAUT_DEFAUT
-        self.col_d = COL_D if COL_D is not None else COL_D_DEFAUT
+        self.top = TOP if TOP is not None else TOP_DEFAULT
+        self.col_r = COL_R if COL_R is not None else COL_R_DEFAULT
 
         try:
             layout = ui._layout
-            largeur = layout['width']
-            y_haut = layout['line1'][1]
-            y_bas = layout['line2'][1]
+            width = layout['width']
+            y_top = layout['line1'][1]
+            y_bottom = layout['line2'][1]
         except Exception as e:
-            logging.warning('[neuromancer] layout illisible (%s), valeurs par defaut' % e)
+            logging.warning('[neuromancer] layout unreadable (%s), using defaults' % e)
             return
 
-        dispo_h = y_bas - y_haut - 4
-        if dispo_h < 20 or largeur < 60:
-            logging.warning('[neuromancer] bande utile trop petite (%dx%d)' % (largeur, dispo_h))
+        avail_h = y_bottom - y_top - 4
+        if avail_h < 20 or width < 60:
+            logging.warning('[neuromancer] usable band too small (%dx%d)' % (width, avail_h))
             return
 
-        if HAUT is None:
-            self.haut = y_haut + 2
+        if TOP is None:
+            self.top = y_top + 2
 
         # le portrait doit tenir dans la bande, et laisser la place au texte
-        ref = self.images[self.DEFAUT]
-        max_w = max(40, largeur // 2 - MARGE_X)
-        echelle = min(dispo_h / ref.height, max_w / ref.width, 1.0)
+        ref = self.images[self.FALLBACK]
+        max_w = max(40, width // 2 - MARGIN_X)
+        scale = min(avail_h / ref.height, max_w / ref.width, 1.0)
 
-        if echelle < 0.999:
-            cible = (max(1, int(ref.width * echelle)), max(1, int(ref.height * echelle)))
-            # NEAREST : on preserve le pixel art, pas d'anti-aliasing
-            self.images = {nom: img.resize(cible, Image.NEAREST)
-                           for nom, img in self.images.items()}
-            logging.info('[neuromancer] images redimensionnees en %dx%d' % cible)
+        if scale < 0.999:
+            target = (max(1, int(ref.width * scale)), max(1, int(ref.height * scale)))
+            # NEAREST: preserve the pixel art, no antialiasing
+            self.images = {name: img.resize(target, Image.NEAREST)
+                           for name, img in self.images.items()}
+            logging.info('[neuromancer] images scaled to %dx%d' % target)
 
-        if COL_D is None:
-            self.col_d = MARGE_X + self.images[self.DEFAUT].width + GOUTTIERE
+        if COL_R is None:
+            self.col_r = MARGIN_X + self.images[self.FALLBACK].width + GUTTER
 
-        _trace('layout : ecran %dx%d, portrait en (%d,%d), texte en x=%d'
-               % (largeur, layout['height'], MARGE_X, self.haut, self.col_d))
+        _trace('layout: screen %dx%d, portrait at (%d,%d), text at x=%d'
+               % (width, layout['height'], MARGIN_X, self.top, self.col_r))
 
     def on_ui_setup(self, ui):
-        _trace('on_ui_setup appele')
+        _trace('on_ui_setup called')
 
-        # on_loaded a pu ne pas encore tourner : on charge nous-memes
-        self._charger_images()
+        # on_loaded may not have run yet: load them ourselves
+        self._load_images()
         if not self.images:
-            _trace('on_ui_setup : chargement impossible, abandon')
+            _trace('on_ui_setup: cannot load images, giving up')
             return
 
-        self._calculer_layout(ui)
+        self._compute_layout(ui)
 
-        # 'face' reste en place : le coeur ecrit dedans et on le lit dans
-        # on_ui_update. On l'expulse simplement hors du cadre (h = 122).
-        self._deplacer(ui, 'face', (0, 300))
+        # 'face' stays in place: the core writes to it and we read it in
+        # on_ui_update. We simply push it outside the frame (h = 122).
+        self._move(ui, 'face', (0, 300))
 
-        # le layout officiel met 'name' en (5,20) et 'status' en (125,20),
-        # or notre portrait occupe x 6-82 : on rapatrie tout en colonne droite
-        self._deplacer(ui, 'name', (self.col_d, self.haut))
-        # 'status' change bien trop vite pour etre lu : on le sort du cadre et
-        # on recopie son contenu nous-memes, a intervalle maitrise (voir
-        # on_ui_update). Le coeur continue d'y ecrire librement.
-        self._deplacer(ui, 'status', (0, 300))
+        # the stock layout puts 'name' at (5,20) and 'status' at (125,20),
+        # but our portrait occupies x 6-82: move them to the right column
+        self._move(ui, 'name', (self.col_r, self.top))
+        # 'status' changes far too fast to be read: push it out of frame and
+        # copy its content ourselves at a controlled pace (see on_ui_update).
+        # The core keeps writing to it freely.
+        self._move(ui, 'status', (0, 300))
 
-        self._renommer_libelles(ui)
+        self._rename_labels(ui)
 
         for element in ('friend_face', 'friend_name'):
             try:
@@ -229,80 +227,79 @@ class Neuromancer(plugins.Plugin):
             except Exception:
                 pass
 
-        self.bitmap = Bitmap(os.path.join(self.DOSSIER, self.DEFAUT + '.png'),
-                             xy=(MARGE_X, self.haut))
-        # le Bitmap a rouvert le fichier : on lui repasse notre copie, qui a pu
-        # etre redimensionnee pour l'ecran
-        self.bitmap.image = self.images[self.DEFAUT]
+        self.bitmap = Bitmap(os.path.join(self.FOLDER, self.FALLBACK + '.png'),
+                             xy=(MARGIN_X, self.top))
+        # Bitmap reopened the file: hand it our copy, which may have been
+        # scaled for this screen
+        self.bitmap.image = self.images[self.FALLBACK]
         ui.add_element('nm_face', self.bitmap)
-        _trace('element nm_face ajoute')
+        _trace('nm_face element added')
 
-        ui.add_element('nm_phrase', Text(
-            value='', position=(self.col_d, self.haut + 18),
+        ui.add_element('nm_line', Text(
+            value='', position=(self.col_r, self.top + 18),
             color=0, font=fonts.Medium,
-            wrap=True, max_length=self.LARGEUR_PHRASE))
+            wrap=True, max_length=self.LINE_WIDTH))
 
         ui.add_element('nm_deck', Text(
-            value='', position=(self.col_d, self.haut + 46),
+            value='', position=(self.col_r, self.top + 46),
             color=0, font=fonts.Medium))
 
-        ui.add_element('nm_statut', LabeledValue(
-            color=0, label='', value='', position=(self.col_d, self.haut + 62),
+        ui.add_element('nm_status', LabeledValue(
+            color=0, label='', value='', position=(self.col_r, self.top + 62),
             label_font=fonts.Bold, text_font=fonts.Medium))
-        ui.add_element('nm_cible', LabeledValue(
-            color=0, label='', value='', position=(self.col_d, self.haut + 78),
+        ui.add_element('nm_target', LabeledValue(
+            color=0, label='', value='', position=(self.col_r, self.top + 78),
             label_font=fonts.Bold, text_font=fonts.Medium))
 
-    def _renommer_libelles(self, ui):
-        """Passe le bandeau au vocabulaire de Gibson.
+    def _rename_labels(self, ui):
+        """Switch the status bar to Gibson's vocabulary.
 
-        On ne touche qu'aux libelles qui tiennent dans la place disponible :
-        'UP' devrait devenir 'JACKED', mais l'element est deja a x=185 sur un
-        ecran de 250 et deborderait.
+        Only labels that fit are touched: 'UP' would become 'JACKED', but the
+        element already sits at x=185 on a 250 px screen and would overflow.
         """
-        for nom, (libelle, x, espacement) in self.LIBELLES.items():
+        for name, (label, x, spacing) in self.LABELS.items():
             try:
-                element = ui._state._state[nom]
-                element.label = libelle
+                element = ui._state._state[name]
+                element.label = label
                 if x is not None:
                     element.xy = (x, element.xy[1])
-                if espacement is not None:
-                    element.label_spacing = espacement
+                if spacing is not None:
+                    element.label_spacing = spacing
             except Exception as e:
-                logging.warning('[neuromancer] libelle %s inchange : %s' % (nom, e))
+                logging.warning('[neuromancer] label %s unchanged: %s' % (name, e))
 
     def _temperature(self):
-        """Temperature du SoC en degres, ou chaine vide si illisible."""
+        """SoC temperature in degrees, or empty string if unreadable."""
         try:
             with open('/sys/class/thermal/thermal_zone0/temp') as f:
                 return '%d\u00b0C' % (int(f.read().strip()) / 1000)
         except Exception:
             return ''
 
-    def _afficher_deck(self, ui):
-        """Affiche la temperature, sauf pendant l'ecran ICE BROKEN."""
+    def _show_deck(self, ui):
+        """Show the temperature, refreshed at a slow interval."""
         if not self.DECK_TEMPERATURE:
             return
-        maintenant = time.time()
-        if maintenant < self.deck_jusqua:
+        now = time.time()
+        if now < self.deck_until:
             return
-        self.deck_jusqua = maintenant + self.DECK_INTERVALLE
+        self.deck_until = now + self.DECK_INTERVAL
 
-        valeur = self._temperature()
-        if valeur and valeur != self.deck:
-            self.deck = valeur
-            ui.set('nm_deck', 'DECK %s' % valeur)
+        value = self._temperature()
+        if value and value != self.deck:
+            self.deck = value
+            ui.set('nm_deck', 'DECK %s' % value)
 
     @staticmethod
-    def _deplacer(ui, nom, xy):
+    def _move(ui, name, xy):
         try:
-            ui._state._state[nom].xy = xy
+            ui._state._state[name].xy = xy
         except Exception as e:
-            logging.warning('[neuromancer] deplacement de %s impossible : %s' % (nom, e))
+            logging.warning('[neuromancer] cannot move %s: %s' % (name, e))
 
     def on_unload(self, ui):
         with ui._lock:
-            for element in ('nm_face', 'nm_phrase', 'nm_deck', 'nm_statut', 'nm_cible'):
+            for element in ('nm_face', 'nm_line', 'nm_deck', 'nm_status', 'nm_target'):
                 try:
                     ui.remove_element(element)
                 except Exception:
@@ -310,78 +307,77 @@ class Neuromancer(plugins.Plugin):
 
     # ---------------------------------------------------------------- evenements
 
-    def _temporiser_phrase(self, ui):
-        """Affiche les repliques du coeur l'une apres l'autre, chacune son temps.
+    def _pace_lines(self, ui):
+        """Show the core's lines one after another, each for its own time.
 
-        pwnagotchi remplace son statut a chaque evenement : certaines repliques
-        vivent quarante secondes, d'autres une seule. Se contenter de lire le
-        statut a intervalle regulier ne montrerait que les premieres.
+        pwnagotchi replaces its status on every event: some lines live forty
+        seconds, others a single one. Merely sampling the status at a fixed
+        interval would only ever show the slow ones.
 
-        On surveille donc chaque changement et on l'empile, puis on defile a
-        raison d'une replique par DUREE_PHRASE. La file est bornee : en cas de
-        forte activite, les plus anciennes sont abandonnees plutot que de
-        prendre du retard sur le present.
+        So we watch every change and queue it, then advance one line per
+        LINE_SECONDS. The queue is bounded: under heavy activity the oldest
+        lines are dropped rather than letting the display fall behind reality.
 
-        Ecrire dans 'status' provoquerait une boucle de rafraichissement : on
-        n'y touche jamais, on affiche dans notre propre element.
+        Writing back into 'status' would cause a refresh loop: we never touch
+        it, we render into our own element.
         """
-        # 1. capturer ce que le coeur vient d'ecrire
+        # 1. capture what the core just wrote
         try:
-            courant = ui.get('status')
+            current = ui.get('status')
         except Exception:
-            courant = None
+            current = None
 
-        if courant and courant != self.vue:
-            self.vue = courant
-            if courant != self.phrase and courant not in self.file:
-                self.file.append(courant)
+        if current and current != self.last_seen:
+            self.last_seen = current
+            if current != self.line and current not in self.queue:
+                self.queue.append(current)
 
-        # 2. defiler quand la replique en cours a fait son temps
-        if time.time() < self.phrase_jusqua or not self.file:
+        # 2. advance once the current line has had its time
+        if time.time() < self.line_until or not self.queue:
             return
 
-        self.phrase = self.file.popleft()
-        self.phrase_jusqua = time.time() + self.DUREE_PHRASE
-        ui.set('nm_phrase', self.phrase)
+        self.line = self.queue.popleft()
+        self.line_until = time.time() + self.LINE_SECONDS
+        ui.set('nm_line', self.line)
 
     def on_handshake(self, agent, filename, access_point, client_station):
         if 'ice' not in self.images:
             return
         self.ssid = (access_point or {}).get('hostname') or '???'
-        self.jusqua = time.time() + self.DUREE_PWN
-        logging.info('[neuromancer] ICE BROKEN sur %s' % self.ssid)
+        self.until = time.time() + self.PWN_SECONDS
+        logging.info('[neuromancer] ICE BROKEN on %s' % self.ssid)
 
     def on_ui_update(self, ui):
         if self.bitmap is None or not self.images:
             return
 
-        self._temporiser_phrase(ui)
-        self._afficher_deck(ui)
+        self._pace_lines(ui)
+        self._show_deck(ui)
 
-        if time.time() < self.jusqua:
-            voulu = 'ice'
+        if time.time() < self.until:
+            wanted = 'ice'
         else:
-            # on lit ce que le coeur vient de decider, et on traduit
+            # read what the core just decided, and translate it
             try:
-                courant = ui.get('face')
+                current = ui.get('face')
             except Exception:
-                courant = None
-            voulu = self.MAPPING.get(courant, self.DEFAUT)
+                current = None
+            wanted = self.MAPPING.get(current, self.FALLBACK)
 
-        if voulu not in self.images:
-            voulu = self.DEFAUT
+        if wanted not in self.images:
+            wanted = self.FALLBACK
 
-        # un refresh e-ink coute ~2 s : on ne repeint que sur changement reel
-        if voulu == self.affiche:
+        # an e-ink refresh costs ~2 s: only repaint on a real change
+        if wanted == self.shown:
             return
-        if self.affiche is None:
-            _trace('premier rendu : image %s' % voulu)
-        self.affiche = voulu
+        if self.shown is None:
+            _trace('first render: image %s' % wanted)
+        self.shown = wanted
 
-        self.bitmap.image = self.images[voulu]
-        if voulu == 'ice':
-            ui.set('nm_statut', 'ICE BROKEN')
-            ui.set('nm_cible', self.ssid[:16])
+        self.bitmap.image = self.images[wanted]
+        if wanted == 'ice':
+            ui.set('nm_status', 'ICE BROKEN')
+            ui.set('nm_target', self.ssid[:16])
         else:
-            ui.set('nm_statut', '')
-            ui.set('nm_cible', '')
+            ui.set('nm_status', '')
+            ui.set('nm_target', '')
