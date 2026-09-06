@@ -10,17 +10,24 @@ import pwnagotchi.ui.fonts as fonts
 from pwnagotchi.ui.components import Bitmap, LabeledValue
 
 
-# coordonnees calees sur le layout officiel waveshare2in13_V2 :
-# ecran 250x122, filet haut y=14, filet bas y=108
-HAUT = 16      # sommet du portrait, juste sous le filet du haut
-COL_D = 95     # colonne de droite, apres le portrait (x 6-82)
+# Par defaut, le plugin deduit ces valeurs du layout de l'ecran detecte, ce qui
+# le rend utilisable sur n'importe quel driver. Mettre un entier a la place de
+# None pour forcer une valeur.
+HAUT = None    # sommet du portrait ; auto = juste sous le filet du haut
+COL_D = None   # colonne de texte de droite ; auto = apres le portrait
+MARGE_X = 6    # decalage du portrait depuis le bord gauche
+GOUTTIERE = 13 # espace entre le portrait et la colonne de texte
+
+# valeurs de repli si le layout n'est pas lisible (calees sur waveshare2in13_V2)
+HAUT_DEFAUT = 16
+COL_D_DEFAUT = 95
 
 
 class Neuromancer(plugins.Plugin):
     __author__ = 'wackojice'
-    __version__ = '2.0.0'
+    __version__ = '3.0.0'
     __license__ = 'GPL3'
-    __description__ = 'Faces Neuromancer + ecran ICE BROKEN (Waveshare 2.13 v2, 250x122)'
+    __description__ = 'Visages et voix Neuromancer + ecran ICE BROKEN, layout adaptatif'
 
     DOSSIER = '/usr/local/share/neuromancer'
     DUREE_PWN = 8          # secondes d'affichage apres un handshake
@@ -56,6 +63,8 @@ class Neuromancer(plugins.Plugin):
         self.jusqua = 0
         self.ssid = ''
         self.affiche = None     # nom de l'image actuellement posee
+        self.haut = HAUT_DEFAUT
+        self.col_d = COL_D_DEFAUT
 
     # ---------------------------------------------------------------- chargement
 
@@ -78,9 +87,56 @@ class Neuromancer(plugins.Plugin):
 
     # ---------------------------------------------------------------- interface
 
+    def _calculer_layout(self, ui):
+        """Deduit les coordonnees du layout de l'ecran, et adapte les images.
+
+        Cherche les deux filets horizontaux pour connaitre la bande utile, puis
+        redimensionne le portrait s'il n'y tient pas. Retombe sur les valeurs
+        de la 2.13 v2 si le layout n'est pas lisible.
+        """
+        self.haut = HAUT if HAUT is not None else HAUT_DEFAUT
+        self.col_d = COL_D if COL_D is not None else COL_D_DEFAUT
+
+        try:
+            layout = ui._layout
+            largeur = layout['width']
+            y_haut = layout['line1'][1]
+            y_bas = layout['line2'][1]
+        except Exception as e:
+            logging.warning('[neuromancer] layout illisible (%s), valeurs par defaut' % e)
+            return
+
+        dispo_h = y_bas - y_haut - 4
+        if dispo_h < 20 or largeur < 60:
+            logging.warning('[neuromancer] bande utile trop petite (%dx%d)' % (largeur, dispo_h))
+            return
+
+        if HAUT is None:
+            self.haut = y_haut + 2
+
+        # le portrait doit tenir dans la bande, et laisser la place au texte
+        ref = self.images[self.DEFAUT]
+        max_w = max(40, largeur // 2 - MARGE_X)
+        echelle = min(dispo_h / ref.height, max_w / ref.width, 1.0)
+
+        if echelle < 0.999:
+            cible = (max(1, int(ref.width * echelle)), max(1, int(ref.height * echelle)))
+            # NEAREST : on preserve le pixel art, pas d'anti-aliasing
+            self.images = {nom: img.resize(cible, Image.NEAREST)
+                           for nom, img in self.images.items()}
+            logging.info('[neuromancer] images redimensionnees en %dx%d' % cible)
+
+        if COL_D is None:
+            self.col_d = MARGE_X + self.images[self.DEFAUT].width + GOUTTIERE
+
+        logging.info('[neuromancer] ecran %dx%d, portrait en (%d,%d), texte en x=%d'
+                     % (largeur, layout['height'], MARGE_X, self.haut, self.col_d))
+
     def on_ui_setup(self, ui):
         if not self.images:
             return
+
+        self._calculer_layout(ui)
 
         # 'face' reste en place : le coeur ecrit dedans et on le lit dans
         # on_ui_update. On l'expulse simplement hors du cadre (h = 122).
@@ -88,8 +144,8 @@ class Neuromancer(plugins.Plugin):
 
         # le layout officiel met 'name' en (5,20) et 'status' en (125,20),
         # or notre portrait occupe x 6-82 : on rapatrie tout en colonne droite
-        self._deplacer(ui, 'name', (COL_D, 16))
-        self._deplacer(ui, 'status', (COL_D, 34))
+        self._deplacer(ui, 'name', (self.col_d, self.haut))
+        self._deplacer(ui, 'status', (self.col_d, self.haut + 18))
 
         for element in ('friend_face', 'friend_name'):
             try:
@@ -98,14 +154,17 @@ class Neuromancer(plugins.Plugin):
                 pass
 
         self.bitmap = Bitmap(os.path.join(self.DOSSIER, self.DEFAUT + '.png'),
-                             xy=(6, HAUT))
+                             xy=(MARGE_X, self.haut))
+        # le Bitmap a rouvert le fichier : on lui repasse notre copie, qui a pu
+        # etre redimensionnee pour l'ecran
+        self.bitmap.image = self.images[self.DEFAUT]
         ui.add_element('nm_face', self.bitmap)
 
         ui.add_element('nm_statut', LabeledValue(
-            color=0, label='', value='', position=(COL_D, 62),
+            color=0, label='', value='', position=(self.col_d, self.haut + 46),
             label_font=fonts.Bold, text_font=fonts.Medium))
         ui.add_element('nm_cible', LabeledValue(
-            color=0, label='', value='', position=(COL_D, 78),
+            color=0, label='', value='', position=(self.col_d, self.haut + 62),
             label_font=fonts.Bold, text_font=fonts.Medium))
 
     @staticmethod

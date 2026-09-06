@@ -60,16 +60,30 @@ Au démarrage, le plugin annonce le nombre d'images chargées.
 
 ## Compatibilité
 
-Développé et calé sur **Waveshare 2.13" v2** (250 × 122), testé avec le fork
+**Le layout s'adapte tout seul à l'écran détecté.** Au démarrage, le plugin lit
+le `layout()` du driver actif, repère la bande utile entre les deux filets
+horizontaux, y place le portrait et en déduit la colonne de texte. Si le
+portrait ne tient pas, les images sont réduites en `NEAREST` — sans
+anti-aliasing, pour préserver le pixel art.
+
+Vérifié par simulation sur quatre géométries :
+
+| Écran | Portrait | Colonne de texte |
+|---|---|---|
+| Waveshare 2.13" (250 × 122) | 76 × 80 en y=16 | x=95 |
+| Waveshare 1.54" (200 × 200) | 76 × 80 en y=16 | x=95 |
+| Waveshare 2.7" (264 × 176) | 76 × 80 en y=16 | x=95 |
+| Tricolore (212 × 104) | **réduit en 72 × 76**, y=14 | x=91 |
+
+Développé sur **Waveshare 2.13" v2** avec le fork
 [jayofelony/pwnagotchi](https://github.com/jayofelony/pwnagotchi) branche `noai`.
 
-Les autres variantes 2.13" (`V3`, `V4`, `b_V4`) partagent la même résolution
-250 × 122 et devraient fonctionner sans modification.
+Pour forcer des coordonnées, remplacer `None` par un entier en haut du plugin :
 
-Pour un écran de taille différente, ajuster `HAUT` et `COL_D` en haut du plugin
-d'après le `layout()` du driver correspondant dans
-`pwnagotchi/ui/hw/`. Sur la variante tricolore (212 × 104), il faut aussi
-réduire les images à environ 68 px de haut.
+```python
+HAUT = None    # auto : juste sous le filet du haut
+COL_D = None   # auto : après le portrait
+```
 
 ## Les visages
 
@@ -129,8 +143,10 @@ En haut de `neuromancer.py` :
 | `DOSSIER` | emplacement des PNG |
 | `DUREE_PWN` | secondes d'affichage de l'écran ICE BROKEN |
 | `DEFAUT` | image de repli |
-| `HAUT` | ordonnée du haut du portrait |
-| `COL_D` | abscisse de la colonne de texte de droite |
+| `HAUT` | ordonnée du portrait — `None` = calculé depuis l'écran |
+| `COL_D` | abscisse de la colonne de texte — `None` = calculé |
+| `MARGE_X` | décalage du portrait depuis le bord gauche |
+| `GOUTTIERE` | espace entre le portrait et le texte |
 
 ## Comment ça marche
 
