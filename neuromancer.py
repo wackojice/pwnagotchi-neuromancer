@@ -52,7 +52,7 @@ class Neuromancer(plugins.Plugin):
 
     DOSSIER = '/usr/local/share/neuromancer'
     DUREE_PWN = 8          # secondes d'affichage apres un handshake
-    DUREE_PHRASE = 15      # duree minimale d'affichage d'une replique
+    DUREE_PHRASE = 6       # duree minimale d'affichage d'une replique
     LARGEUR_PHRASE = 20    # caracteres par ligne avant retour a la ligne
     DEFAUT = 'awake'       # image de repli si un etat n'a pas de fichier
 

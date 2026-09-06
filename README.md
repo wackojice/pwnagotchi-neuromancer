@@ -145,7 +145,7 @@ En haut de `neuromancer.py` :
 |---|---|
 | `DOSSIER` | emplacement des PNG |
 | `DUREE_PWN` | secondes d'affichage de l'écran ICE BROKEN |
-| `DUREE_PHRASE` | durée minimale d'affichage d'une réplique (défaut : 15 s) |
+| `DUREE_PHRASE` | durée minimale d'affichage d'une réplique (défaut : 6 s) |
 | `LARGEUR_PHRASE` | caractères par ligne avant retour à la ligne |
 | `DEFAUT` | image de repli |
 | `HAUT` | ordonnée du portrait — `None` = calculé depuis l'écran |
