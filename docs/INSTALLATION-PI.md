@@ -3,6 +3,10 @@
 Step-by-step for the first run on real hardware — as much a checklist for
 verifying as for installing.
 
+**This assumes a working pwnagotchi.** The theme installs on top of an existing
+setup; if you have not flashed one yet, see [pwnagotchi.ai](https://pwnagotchi.ai/)
+or [jayofelony/pwnagotchi](https://github.com/jayofelony/pwnagotchi) first.
+
 ---
 
 ## 1. Reaching the pwnagotchi

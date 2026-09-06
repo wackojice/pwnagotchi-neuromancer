@@ -21,6 +21,30 @@ language, and an **ICE BROKEN** screen fires on every captured handshake.
 The plugin **does not modify pwnagotchi**: it installs as a custom plugin and a
 standard gettext locale, and both switch off with one config line.
 
+## Requirements
+
+**A working pwnagotchi.** This is a theme, not a distribution: it installs on
+top of an existing setup and does nothing on its own. If you do not have one
+yet, start there:
+
+- [pwnagotchi.ai](https://pwnagotchi.ai/) — the project, and how to flash an
+  image onto a Raspberry Pi
+- [jayofelony/pwnagotchi](https://github.com/jayofelony/pwnagotchi) — the
+  actively maintained fork, with ready-made images
+
+Tested against:
+
+| | |
+|---|---|
+| pwnagotchi | **2.9.5.3** (real hardware) and the `jayofelony` **`noai`** branch (source-verified) |
+| Screen | Waveshare 2.13" v2 (`ui.display.type = "waveshare_2"`) |
+| Board | Raspberry Pi Zero W, Raspbian bookworm |
+
+Other screens should work — the layout adapts, see *Compatibility* below.
+
+Nothing else is needed: no extra Python package, no internet access on the pi.
+The plugin only uses what pwnagotchi already ships (Pillow, gettext).
+
 ## Install
 
 On the pwnagotchi itself:
