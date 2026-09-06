@@ -6,7 +6,10 @@ chaque handshake capturé.
 
 ![aperçu de l'écran](docs/apercu_ecran.png)
 
-*Rendu attendu sur Waveshare 2.13" — agrandi ×4.*
+*Rendu sur Waveshare 2.13" — agrandi ×4.*
+
+> Validé sur un vrai Raspberry Pi Zero : portrait net, changements d'état,
+> écran ICE BROKEN déclenché sur un handshake réel avec le SSID de la cible.
 
 ## Ce que ça fait
 

@@ -1,11 +1,12 @@
 # État du projet
 
-> Où on en est, et par quoi reprendre. Mis à jour le **2026-09-05**.
+> Où on en est, et par quoi reprendre. Mis à jour le **2026-09-06**.
 
 ## En une phrase
 
-Le thème est **complet et prêt à installer** — visages, voix et layout
-adaptatif — mais **rien n'a encore tourné sur un vrai pwnagotchi**.
+Le thème est **complet et validé sur le matériel** : visages, voix, écran
+ICE BROKEN et layout adaptatif fonctionnent sur un Raspberry Pi Zero avec
+Waveshare 2.13" v2.
 
 ## Fait
 
@@ -19,8 +20,8 @@ adaptatif — mais **rien n'a encore tourné sur un vrai pwnagotchi**.
 
 ## À faire
 
-- [ ] **Premier test sur le Pi** — voir `docs/INSTALLATION-PI.md`
-- [ ] Passer le dépôt public (seulement après le test)
+- [x] **Premier test sur le Pi** — concluant : portrait net, états, ICE BROKEN sur handshake réel
+- [ ] Passer le dépôt public
 - [ ] États non mappés : `ANGRY`, `BROKEN`, `UPLOAD` affichent `awake`.
       La recette est connue : visière en aplat noir + motif blanc
 - [ ] Corriger le chevauchement `CH 11APS 11` — défaut du layout upstream
@@ -40,13 +41,27 @@ lecture seule, hors dépôt).
   `locale/<lang>/LC_MESSAGES/voice.mo`
 - toutes les variantes 2.13" (`V2`, `V3`, `V4`, `b_V4`) font 250 × 122
 
-## Incertitudes assumées
+## Incertitudes levées par le test matériel
 
-- **Le rendu e-ink** n'a jamais été vu. La zone casque du portrait est dense en
-  traits de 1 px et pourrait crépiter — l'opérateur trouve les images très bien
-  telles quelles, décision prise de ne pas y toucher avant d'avoir vu le réel.
-- **La police** : le rendu de `tools/preview.py` utilise DejaVuSansMono, comme
-  pwnagotchi. Fidèle, mais un e-ink n'est pas un écran.
+- **Le rendu e-ink est net.** Je pronostiquais que la zone casque, dense en
+  traits de 1 px, allait crépiter. Elle ne crépite pas : le portrait est
+  parfaitement lisible. L'opérateur avait raison de ne pas vouloir y toucher.
+- **Les états se distinguent** à l'usage : `awake`, `look_l`, `look_r` et
+  `sleep` ont été observés au fil du fonctionnement.
+- **L'écran ICE BROKEN se déclenche** sur un vrai handshake, avec le SSID.
+
+## Le bug qui a coûté le plus cher
+
+`on_ui_setup` est appelé **avant** `on_loaded` : pwnagotchi traite les
+événements de chaque plugin dans un thread dédié, et la vue se construit avant
+que le chargement des plugins ne soit émis. Le plugin trouvait `self.images`
+vide, abandonnait, et n'ajoutait jamais son portrait — sans la moindre erreur
+dans les logs.
+
+Invisible en lecture de code comme en simulation. Il a fallu instrumenter le
+plugin pour qu'il écrive ses étapes sur la partition FAT du boot, avec `fsync`,
+afin que la trace survive au débranchement. Le fichier `neuromancer-trace.txt`
+reste en place : il est le meilleur outil de diagnostic du projet.
 
 ## Décisions prises
 
