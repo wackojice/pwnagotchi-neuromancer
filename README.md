@@ -88,6 +88,32 @@ HAUT = None    # auto : juste sous le filet du haut
 COL_D = None   # auto : après le portrait
 ```
 
+## Le bandeau
+
+Le plugin réécrit aussi les libellés de l'interface dans le lexique du roman :
+
+| pwnagotchi | Neuromancer |
+|---|---|
+| `APS 9 (19)` | `NODES 9 (19)` |
+| `PWND 1 (12)` | `ICE 1 (12)` |
+
+`UP` et `CH` restent tels quels : l'élément d'uptime est déjà en `x = 185` sur
+un écran de 250 px et un libellé plus long déborderait.
+
+Ce renommage corrige au passage un défaut d'affichage de pwnagotchi. Un
+`LabeledValue` place sa valeur à `x + espacement + 5 × len(libellé)`, en
+comptant 5 px par caractère alors que la police en fait 6 : plus le libellé est
+long, plus sa valeur remonte dessus — d'où le `CH 11APS` collé du rendu
+d'origine. Le plugin repositionne les éléments et élargit l'espacement.
+
+## La température du deck
+
+Une ligne `DECK 44C` affiche la température du SoC, lue dans
+`/sys/class/thermal/thermal_zone0/temp` toutes les `DECK_INTERVALLE` secondes.
+Utile sur un Pi Zero, et raccord avec le vocabulaire — un cyberdeck qui chauffe.
+
+Désactivable avec `DECK_TEMPERATURE = False`.
+
 ## Les visages
 
 | Fichier | État | Correspondance |
@@ -148,6 +174,9 @@ En haut de `neuromancer.py` :
 | `DUREE_PHRASE` | durée minimale d'affichage d'une réplique (défaut : 6 s) |
 | `LARGEUR_PHRASE` | caractères par ligne avant retour à la ligne |
 | `FILE_MAX` | répliques gardées en attente (défaut : 3) |
+| `LIBELLES` | libellés du bandeau à réécrire, avec position et espacement |
+| `DECK_TEMPERATURE` | afficher la température du SoC |
+| `DECK_INTERVALLE` | secondes entre deux lectures de température |
 | `DEFAUT` | image de repli |
 | `HAUT` | ordonnée du portrait — `None` = calculé depuis l'écran |
 | `COL_D` | abscisse de la colonne de texte — `None` = calculé |

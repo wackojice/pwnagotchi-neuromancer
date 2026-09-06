@@ -43,13 +43,16 @@ MAX_STATUT = 20   # layout['status']['max'] du driver V2
 PORTRAIT_X = 6
 
 # --- textes d'exemple
+# libelles tels que le plugin les reecrit (voir LIBELLES dans neuromancer.py)
+# format : (libelle, valeur, abscisse, espacement)
 DEMO = {
-    'channel': 'CH 11',
-    'aps': 'APS 11 (25)',
-    'uptime': 'UP 00:09',
-    'shakes': 'PWND 3 (12)',
-    'mode': 'AUTO',
-    'name': 'wackogotchi>',
+    'channel': ('CH', '11', 0, 5),
+    'aps': ('NODES', '9 (19)', 40, 12),
+    'uptime': ('UP', '00:09:13', 185, 5),
+    'shakes': ('ICE', '1 (12)', 0, 8),
+    'mode': ('AUTO', '', 225, 0),
+    'name': 'Case>',
+    'deck': 'DECK 44C',
 }
 
 # une replique par etat, tiree de la vraie locale neuromancer
@@ -116,11 +119,15 @@ def composer(etat, polices, _, ssid='LINKSYS_5G'):
     d.line([0, LIGNE_HAUT, LARGEUR, LIGNE_HAUT], fill=0)
     d.line([0, LIGNE_BAS, LARGEUR, LIGNE_BAS], fill=0)
 
-    # bandeaux haut et bas
-    for cle in ('channel', 'aps', 'uptime'):
-        d.text(POS[cle], DEMO[cle], font=polices['bold'], fill=0)
-    for cle in ('shakes', 'mode'):
-        d.text(POS[cle], DEMO[cle], font=polices['bold'], fill=0)
+    # bandeaux haut et bas, rendus comme LabeledValue : le libelle en gras,
+    # puis la valeur a x + espacement + 5 * len(libelle)
+    for cle in ('channel', 'aps', 'uptime', 'shakes', 'mode'):
+        libelle, valeur, x, espacement = DEMO[cle]
+        y = POS[cle][1]
+        d.text((x, y), libelle, font=polices['bold'], fill=0)
+        if valeur:
+            d.text((x + espacement + 5 * len(libelle), y), valeur,
+                   font=polices['medium'], fill=0)
 
     # le portrait
     chemin = os.path.join(IMAGES, etat + '.png')
@@ -140,9 +147,10 @@ def composer(etat, polices, _, ssid='LINKSYS_5G'):
         y += 12
 
     # lignes ajoutees par le plugin, remplies seulement en mode ice
+    d.text((COL_D, 62), DEMO['deck'], font=polices['medium'], fill=0)
     if etat == 'ice':
-        d.text((COL_D, 62), 'ICE BROKEN', font=polices['bold'], fill=0)
-        d.text((COL_D, 78), ssid[:16], font=polices['medium'], fill=0)
+        d.text((COL_D, 78), 'ICE BROKEN', font=polices['bold'], fill=0)
+        d.text((COL_D, 94), ssid[:16], font=polices['medium'], fill=0)
 
     return ecran
 

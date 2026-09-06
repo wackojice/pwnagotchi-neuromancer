@@ -48,7 +48,7 @@ def _trace(message):
 
 class Neuromancer(plugins.Plugin):
     __author__ = 'wackojice'
-    __version__ = '3.3.1'
+    __version__ = '3.4.0'
     __license__ = 'GPL3'
     __description__ = 'Visages et voix Neuromancer + ecran ICE BROKEN, layout adaptatif'
 
@@ -57,6 +57,21 @@ class Neuromancer(plugins.Plugin):
     DUREE_PHRASE = 6       # duree minimale d'affichage d'une replique
     LARGEUR_PHRASE = 20    # caracteres par ligne avant retour a la ligne
     FILE_MAX = 3           # repliques en attente au maximum
+
+    # Renomme les libelles du bandeau dans le lexique de Gibson.
+    # Chaque entree : element -> (libelle, abscisse ou None, espacement ou None)
+    # LabeledValue place sa valeur a x + espacement + 5*len(libelle), en
+    # comptant 5 px par caractere alors que la police en fait 6 : un libelle
+    # plus long doit etre accompagne d'un decalage et d'un espacement elargi,
+    # sinon sa valeur vient mordre dessus. C'est deja le cas en standard, ou
+    # 'CH 11' touche 'APS'.
+    LIBELLES = {
+        'aps': ('NODES', 40, 12),
+        'shakes': ('ICE', None, 8),
+    }
+
+    DECK_TEMPERATURE = True   # afficher la temperature du Pi
+    DECK_INTERVALLE = 30      # secondes entre deux lectures
     DEFAUT = 'awake'       # image de repli si un etat n'a pas de fichier
 
     # chaque etat du pwnagotchi -> nom de fichier (sans .png)
@@ -95,6 +110,8 @@ class Neuromancer(plugins.Plugin):
         self.phrase_jusqua = 0  # instant avant lequel on ne la remplace pas
         self.vue = None         # dernier statut lu chez le coeur
         self._verrou = threading.Lock()  # on_loaded et on_ui_setup sont concurrents
+        self.deck = ''           # derniere temperature lue
+        self.deck_jusqua = 0     # instant de la prochaine lecture
         self.file = deque(maxlen=self.FILE_MAX)  # repliques en attente
 
     # ---------------------------------------------------------------- chargement
@@ -203,6 +220,8 @@ class Neuromancer(plugins.Plugin):
         # on_ui_update). Le coeur continue d'y ecrire librement.
         self._deplacer(ui, 'status', (0, 300))
 
+        self._renommer_libelles(ui)
+
         for element in ('friend_face', 'friend_name'):
             try:
                 ui.remove_element(element)
@@ -222,12 +241,56 @@ class Neuromancer(plugins.Plugin):
             color=0, font=fonts.Medium,
             wrap=True, max_length=self.LARGEUR_PHRASE))
 
+        ui.add_element('nm_deck', Text(
+            value='', position=(self.col_d, self.haut + 46),
+            color=0, font=fonts.Medium))
+
         ui.add_element('nm_statut', LabeledValue(
-            color=0, label='', value='', position=(self.col_d, self.haut + 46),
-            label_font=fonts.Bold, text_font=fonts.Medium))
-        ui.add_element('nm_cible', LabeledValue(
             color=0, label='', value='', position=(self.col_d, self.haut + 62),
             label_font=fonts.Bold, text_font=fonts.Medium))
+        ui.add_element('nm_cible', LabeledValue(
+            color=0, label='', value='', position=(self.col_d, self.haut + 78),
+            label_font=fonts.Bold, text_font=fonts.Medium))
+
+    def _renommer_libelles(self, ui):
+        """Passe le bandeau au vocabulaire de Gibson.
+
+        On ne touche qu'aux libelles qui tiennent dans la place disponible :
+        'UP' devrait devenir 'JACKED', mais l'element est deja a x=185 sur un
+        ecran de 250 et deborderait.
+        """
+        for nom, (libelle, x, espacement) in self.LIBELLES.items():
+            try:
+                element = ui._state._state[nom]
+                element.label = libelle
+                if x is not None:
+                    element.xy = (x, element.xy[1])
+                if espacement is not None:
+                    element.label_spacing = espacement
+            except Exception as e:
+                logging.warning('[neuromancer] libelle %s inchange : %s' % (nom, e))
+
+    def _temperature(self):
+        """Temperature du SoC en degres, ou chaine vide si illisible."""
+        try:
+            with open('/sys/class/thermal/thermal_zone0/temp') as f:
+                return '%dC' % (int(f.read().strip()) / 1000)
+        except Exception:
+            return ''
+
+    def _afficher_deck(self, ui):
+        """Affiche la temperature, sauf pendant l'ecran ICE BROKEN."""
+        if not self.DECK_TEMPERATURE:
+            return
+        maintenant = time.time()
+        if maintenant < self.deck_jusqua:
+            return
+        self.deck_jusqua = maintenant + self.DECK_INTERVALLE
+
+        valeur = self._temperature()
+        if valeur and valeur != self.deck:
+            self.deck = valeur
+            ui.set('nm_deck', 'DECK %s' % valeur)
 
     @staticmethod
     def _deplacer(ui, nom, xy):
@@ -238,7 +301,7 @@ class Neuromancer(plugins.Plugin):
 
     def on_unload(self, ui):
         with ui._lock:
-            for element in ('nm_face', 'nm_phrase', 'nm_statut', 'nm_cible'):
+            for element in ('nm_face', 'nm_phrase', 'nm_deck', 'nm_statut', 'nm_cible'):
                 try:
                     ui.remove_element(element)
                 except Exception:
@@ -292,6 +355,7 @@ class Neuromancer(plugins.Plugin):
             return
 
         self._temporiser_phrase(ui)
+        self._afficher_deck(ui)
 
         if time.time() < self.jusqua:
             voulu = 'ice'
