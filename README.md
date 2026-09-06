@@ -126,3 +126,18 @@ GPL-3.0 — comme pwnagotchi, dont ce plugin utilise les interfaces.
 
 Le nom et l'esthétique font référence au roman *Neuromancer* de William Gibson.
 Projet non officiel, sans affiliation.
+
+## Prévisualiser sans matériel
+
+Le dépôt embarque un outil qui recompose l'écran 250 × 122 à l'identique du
+layout `waveshare2in13_V2` — mêmes coordonnées, mêmes polices, même mode 1 bit —
+pour juger le rendu sans pwnagotchi ni e-ink :
+
+```bash
+./tools/preview.py                # tous les états + une planche
+./tools/preview.py ice --zoom 6   # un seul état, agrandi
+```
+
+Les PNG sortent dans `preview/` (ignoré par git). Nécessite Pillow, et
+`DejaVuSansMono` pour un rendu fidèle (`sudo pacman -S ttf-dejavu` sur Arch) —
+le script bascule sinon sur une autre police monospace en prévenant.
