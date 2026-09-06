@@ -12,7 +12,9 @@
 set -euo pipefail
 
 DOSSIER_IMAGES="/usr/local/share/neuromancer"
-DOSSIER_PLUGINS="/etc/pwnagotchi/custom-plugins"
+# le dossier scanne depend de la version : lu depuis la config, sinon les
+# defauts livres, sinon l'emplacement historique des 2.x
+DOSSIER_PLUGINS=""
 CONFIG="/etc/pwnagotchi/config.toml"
 SOURCE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -30,11 +32,23 @@ echo "==> Installation des images dans $DOSSIER_IMAGES"
 mkdir -p "$DOSSIER_IMAGES"
 cp "$SOURCE"/images/*.png "$DOSSIER_IMAGES/"
 
+DOSSIER_PLUGINS="$(grep -hoP '^\s*main\.custom_plugins\s*=\s*"\K[^"]+' "$CONFIG" 2>/dev/null | head -1)"
+if [[ -z "$DOSSIER_PLUGINS" ]]; then
+    DEFAUTS="$(find / -maxdepth 9 -name 'defaults.toml' -path '*pwnagotchi*' -not -path '*/proc/*' 2>/dev/null | head -1)"
+    DOSSIER_PLUGINS="$(grep -hoP '^\s*main\.custom_plugins\s*=\s*"\K[^"]+' "$DEFAUTS" 2>/dev/null | head -1)"
+fi
+DOSSIER_PLUGINS="${DOSSIER_PLUGINS:-/usr/local/share/pwnagotchi/custom-plugins/}"
+
 echo "==> Installation du plugin dans $DOSSIER_PLUGINS"
 mkdir -p "$DOSSIER_PLUGINS"
 cp "$SOURCE/neuromancer.py" "$DOSSIER_PLUGINS/"
-# nettoyage d'un ancien emplacement errone (versions < 3.0.1)
-rm -f /usr/local/share/pwnagotchi/custom-plugins/neuromancer.py 2>/dev/null || true
+# retire un exemplaire laisse dans l'autre emplacement possible
+for autre in /usr/local/share/pwnagotchi/custom-plugins /etc/pwnagotchi/custom-plugins; do
+    if [[ "$autre" != "${DOSSIER_PLUGINS%/}" && -f "$autre/neuromancer.py" ]]; then
+        rm -f "$autre/neuromancer.py" "$autre/__pycache__/neuromancer."* 2>/dev/null || true
+        echo "  exemplaire retire de $autre"
+    fi
+done
 
 echo "==> Installation de la voix Neuromancer"
 # pwnagotchi vit souvent dans un venv (/home/pi/.pwn) : l'import direct echoue

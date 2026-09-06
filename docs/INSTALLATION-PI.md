@@ -65,7 +65,7 @@ sudo ./install.sh
 
 Le script :
 1. copie les 6 images dans `/usr/local/share/neuromancer/`
-2. copie `neuromancer.py` dans `/etc/pwnagotchi/custom-plugins/`
+2. copie `neuromancer.py` dans `le dossier `main.custom_plugins` (détecté automatiquement)`
 3. installe la voix dans le dossier `locale/` du paquet pwnagotchi
 4. active `main.plugins.neuromancer.enabled` et `main.lang = "neuromancer"`
    (en sauvegardant `config.toml` au préalable)

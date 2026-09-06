@@ -37,7 +37,7 @@ Le script copie les images, installe le plugin, active la ligne
 ```bash
 sudo mkdir -p /usr/local/share/neuromancer
 sudo cp images/*.png /usr/local/share/neuromancer/
-sudo cp neuromancer.py /etc/pwnagotchi/custom-plugins/
+sudo cp neuromancer.py le dossier `main.custom_plugins` (détecté automatiquement)
 ```
 
 Puis dans `/etc/pwnagotchi/config.toml` :

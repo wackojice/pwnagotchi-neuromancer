@@ -40,14 +40,28 @@ mkdir -p "$DEST_IMG"
 cp "$SOURCE"/images/*.png "$DEST_IMG/"
 
 # --- plugin
-# chemin scanne par pwnagotchi : main.custom_plugins, defaut ci-dessous
-DEST_PLUG="$RACINE_SD/etc/pwnagotchi/custom-plugins"
-echo "==> Plugin -> /etc/pwnagotchi/custom-plugins"
+# Le dossier scanne depend de la version : main.custom_plugins vaut
+# /usr/local/share/pwnagotchi/custom-plugins/ sur les 2.x, et
+# /etc/pwnagotchi/custom-plugins/ sur les forks recents. On le lit plutot que
+# de le deviner : d'abord la config de l'utilisateur, puis les defauts livres.
+CHEMIN_PLUG="$(grep -hoP '^\s*main\.custom_plugins\s*=\s*"\K[^"]+' "$CONFIG" 2>/dev/null | head -1)"
+if [[ -z "$CHEMIN_PLUG" ]]; then
+    DEFAUTS="$(find "$RACINE_SD" -maxdepth 9 -name 'defaults.toml' -path '*pwnagotchi*' 2>/dev/null | head -1)"
+    CHEMIN_PLUG="$(grep -hoP '^\s*main\.custom_plugins\s*=\s*"\K[^"]+' "$DEFAUTS" 2>/dev/null | head -1)"
+fi
+CHEMIN_PLUG="${CHEMIN_PLUG:-/usr/local/share/pwnagotchi/custom-plugins/}"
+DEST_PLUG="$RACINE_SD/${CHEMIN_PLUG#/}"
+echo "==> Plugin -> $CHEMIN_PLUG"
 mkdir -p "$DEST_PLUG"
 cp "$SOURCE/neuromancer.py" "$DEST_PLUG/"
-# nettoyage d'un ancien emplacement errone (versions < 3.0.1)
-ANCIEN="$RACINE_SD/usr/local/share/pwnagotchi/custom-plugins/neuromancer.py"
-[[ -f "$ANCIEN" ]] && rm -f "$ANCIEN" && echo "    ancien fichier mal place supprime"
+# nettoyage d'un exemplaire laisse dans l'autre emplacement possible
+for autre in "$RACINE_SD/usr/local/share/pwnagotchi/custom-plugins" \
+             "$RACINE_SD/etc/pwnagotchi/custom-plugins"; do
+    if [[ "$autre" != "${DEST_PLUG%/}" && -f "$autre/neuromancer.py" ]]; then
+        rm -f "$autre/neuromancer.py" "$autre/__pycache__/neuromancer."*
+        echo "    exemplaire retire de ${autre#$RACINE_SD}"
+    fi
+done
 
 # --- voix : le paquet vit souvent dans un venv
 echo "==> Voix Neuromancer"
