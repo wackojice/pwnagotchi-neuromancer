@@ -147,6 +147,7 @@ En haut de `neuromancer.py` :
 | `DUREE_PWN` | secondes d'affichage de l'écran ICE BROKEN |
 | `DUREE_PHRASE` | durée minimale d'affichage d'une réplique (défaut : 6 s) |
 | `LARGEUR_PHRASE` | caractères par ligne avant retour à la ligne |
+| `FILE_MAX` | répliques gardées en attente (défaut : 3) |
 | `DEFAUT` | image de repli |
 | `HAUT` | ordonnée du portrait — `None` = calculé depuis l'écran |
 | `COL_D` | abscisse de la colonne de texte — `None` = calculé |
@@ -166,10 +167,14 @@ Un rafraîchissement e-ink coûte environ deux secondes : le plugin ne repeint q
 lorsque l'image change réellement, jamais à chaque appel de `on_ui_update`.
 
 **Les répliques restent lisibles.** pwnagotchi remplace son statut à chaque
-événement — une phrase peut disparaître en une seconde, avant d'avoir été lue.
-Le plugin sort donc l'élément `status` du cadre et recopie son contenu dans le
-sien, au plus une fois toutes les `DUREE_PHRASE` secondes. Le cœur continue
-d'écrire librement ; seul l'affichage est temporisé.
+événement, et leurs durées de vie n'ont rien de comparable : « Waiting for 40s »
+reste quarante secondes, « I'm bored... » une seule. Lire le statut à intervalle
+régulier ne montrerait donc que les phrases lentes.
+
+Le plugin sort l'élément `status` du cadre, surveille chaque changement et
+l'empile, puis défile à raison d'une réplique toutes les `DUREE_PHRASE`
+secondes. La file est bornée à `FILE_MAX` : en cas de forte activité, les plus
+anciennes sont abandonnées plutôt que de prendre du retard sur le présent.
 
 Écrire dans `status` provoquerait une boucle : chaque écriture marque un
 changement, qui déclenche un rendu, qui rappelle le plugin. Sur un e-ink à deux

@@ -1,6 +1,7 @@
 import os
 import time
 import logging
+from collections import deque
 
 from PIL import Image
 
@@ -46,7 +47,7 @@ def _trace(message):
 
 class Neuromancer(plugins.Plugin):
     __author__ = 'wackojice'
-    __version__ = '3.2.0'
+    __version__ = '3.3.0'
     __license__ = 'GPL3'
     __description__ = 'Visages et voix Neuromancer + ecran ICE BROKEN, layout adaptatif'
 
@@ -54,6 +55,7 @@ class Neuromancer(plugins.Plugin):
     DUREE_PWN = 8          # secondes d'affichage apres un handshake
     DUREE_PHRASE = 6       # duree minimale d'affichage d'une replique
     LARGEUR_PHRASE = 20    # caracteres par ligne avant retour a la ligne
+    FILE_MAX = 3           # repliques en attente au maximum
     DEFAUT = 'awake'       # image de repli si un etat n'a pas de fichier
 
     # chaque etat du pwnagotchi -> nom de fichier (sans .png)
@@ -90,6 +92,8 @@ class Neuromancer(plugins.Plugin):
         self.col_d = COL_D_DEFAUT
         self.phrase = None      # replique actuellement affichee
         self.phrase_jusqua = 0  # instant avant lequel on ne la remplace pas
+        self.vue = None         # dernier statut lu chez le coeur
+        self.file = deque(maxlen=self.FILE_MAX)  # repliques en attente
 
     # ---------------------------------------------------------------- chargement
 
@@ -236,28 +240,38 @@ class Neuromancer(plugins.Plugin):
     # ---------------------------------------------------------------- evenements
 
     def _temporiser_phrase(self, ui):
-        """Recopie le statut du coeur, mais pas plus d'une fois par DUREE_PHRASE.
+        """Affiche les repliques du coeur l'une apres l'autre, chacune son temps.
 
-        pwnagotchi remplace son statut a chaque evenement : une replique peut
-        disparaitre en une seconde, avant d'avoir ete lue. On ne lit donc la
-        sienne qu'une fois le delai ecoule. Ecrire dans 'status' provoquerait
-        une boucle de rafraichissement : on n'y touche jamais, on affiche dans
-        notre propre element.
+        pwnagotchi remplace son statut a chaque evenement : certaines repliques
+        vivent quarante secondes, d'autres une seule. Se contenter de lire le
+        statut a intervalle regulier ne montrerait que les premieres.
+
+        On surveille donc chaque changement et on l'empile, puis on defile a
+        raison d'une replique par DUREE_PHRASE. La file est bornee : en cas de
+        forte activite, les plus anciennes sont abandonnees plutot que de
+        prendre du retard sur le present.
+
+        Ecrire dans 'status' provoquerait une boucle de rafraichissement : on
+        n'y touche jamais, on affiche dans notre propre element.
         """
-        if time.time() < self.phrase_jusqua:
-            return
-
+        # 1. capturer ce que le coeur vient d'ecrire
         try:
             courant = ui.get('status')
         except Exception:
+            courant = None
+
+        if courant and courant != self.vue:
+            self.vue = courant
+            if courant != self.phrase and courant not in self.file:
+                self.file.append(courant)
+
+        # 2. defiler quand la replique en cours a fait son temps
+        if time.time() < self.phrase_jusqua or not self.file:
             return
 
-        if not courant or courant == self.phrase:
-            return
-
-        self.phrase = courant
+        self.phrase = self.file.popleft()
         self.phrase_jusqua = time.time() + self.DUREE_PHRASE
-        ui.set('nm_phrase', courant)
+        ui.set('nm_phrase', self.phrase)
 
     def on_handshake(self, agent, filename, access_point, client_station):
         if 'ice' not in self.images:
