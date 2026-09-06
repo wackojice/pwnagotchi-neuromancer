@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+*.swp
+.DS_Store
+
+# sorties de la previsualisation locale
+preview/
