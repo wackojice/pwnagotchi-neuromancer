@@ -110,7 +110,7 @@ d'origine. Le plugin repositionne les éléments et élargit l'espacement.
 
 ## La température du deck
 
-Une ligne `DECK 44C` affiche la température du SoC, lue dans
+Une ligne `DECK 44°C` affiche la température du SoC, lue dans
 `/sys/class/thermal/thermal_zone0/temp` toutes les `DECK_INTERVALLE` secondes.
 Utile sur un Pi Zero, et raccord avec le vocabulaire — un cyberdeck qui chauffe.
 

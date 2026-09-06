@@ -275,7 +275,7 @@ class Neuromancer(plugins.Plugin):
         """Temperature du SoC en degres, ou chaine vide si illisible."""
         try:
             with open('/sys/class/thermal/thermal_zone0/temp') as f:
-                return '%dC' % (int(f.read().strip()) / 1000)
+                return '%d\u00b0C' % (int(f.read().strip()) / 1000)
         except Exception:
             return ''
 

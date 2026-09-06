@@ -52,7 +52,7 @@ DEMO = {
     'shakes': ('PWND', '1 (12)', 0, 8),
     'mode': ('AUTO', '', 225, 0),
     'name': 'Case>',
-    'deck': 'DECK 44C',
+    'deck': 'DECK 44°C',
 }
 
 # une replique par etat, tiree de la vraie locale neuromancer
