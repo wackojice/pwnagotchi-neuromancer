@@ -25,7 +25,7 @@ COL_D_DEFAUT = 95
 
 class Neuromancer(plugins.Plugin):
     __author__ = 'wackojice'
-    __version__ = '3.0.0'
+    __version__ = '3.0.1'
     __license__ = 'GPL3'
     __description__ = 'Visages et voix Neuromancer + ecran ICE BROKEN, layout adaptatif'
 

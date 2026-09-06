@@ -40,10 +40,14 @@ mkdir -p "$DEST_IMG"
 cp "$SOURCE"/images/*.png "$DEST_IMG/"
 
 # --- plugin
-DEST_PLUG="$RACINE_SD/usr/local/share/pwnagotchi/custom-plugins"
-echo "==> Plugin -> /usr/local/share/pwnagotchi/custom-plugins"
+# chemin scanne par pwnagotchi : main.custom_plugins, defaut ci-dessous
+DEST_PLUG="$RACINE_SD/etc/pwnagotchi/custom-plugins"
+echo "==> Plugin -> /etc/pwnagotchi/custom-plugins"
 mkdir -p "$DEST_PLUG"
 cp "$SOURCE/neuromancer.py" "$DEST_PLUG/"
+# nettoyage d'un ancien emplacement errone (versions < 3.0.1)
+ANCIEN="$RACINE_SD/usr/local/share/pwnagotchi/custom-plugins/neuromancer.py"
+[[ -f "$ANCIEN" ]] && rm -f "$ANCIEN" && echo "    ancien fichier mal place supprime"
 
 # --- voix : le paquet vit souvent dans un venv
 echo "==> Voix Neuromancer"

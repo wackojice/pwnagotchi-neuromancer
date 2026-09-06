@@ -12,7 +12,7 @@
 set -euo pipefail
 
 DOSSIER_IMAGES="/usr/local/share/neuromancer"
-DOSSIER_PLUGINS="/usr/local/share/pwnagotchi/custom-plugins"
+DOSSIER_PLUGINS="/etc/pwnagotchi/custom-plugins"
 CONFIG="/etc/pwnagotchi/config.toml"
 SOURCE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -33,6 +33,8 @@ cp "$SOURCE"/images/*.png "$DOSSIER_IMAGES/"
 echo "==> Installation du plugin dans $DOSSIER_PLUGINS"
 mkdir -p "$DOSSIER_PLUGINS"
 cp "$SOURCE/neuromancer.py" "$DOSSIER_PLUGINS/"
+# nettoyage d'un ancien emplacement errone (versions < 3.0.1)
+rm -f /usr/local/share/pwnagotchi/custom-plugins/neuromancer.py 2>/dev/null || true
 
 echo "==> Installation de la voix Neuromancer"
 # pwnagotchi vit souvent dans un venv (/home/pi/.pwn) : l'import direct echoue
