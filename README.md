@@ -145,6 +145,8 @@ En haut de `neuromancer.py` :
 |---|---|
 | `DOSSIER` | emplacement des PNG |
 | `DUREE_PWN` | secondes d'affichage de l'écran ICE BROKEN |
+| `DUREE_PHRASE` | durée minimale d'affichage d'une réplique (défaut : 15 s) |
+| `LARGEUR_PHRASE` | caractères par ligne avant retour à la ligne |
 | `DEFAUT` | image de repli |
 | `HAUT` | ordonnée du portrait — `None` = calculé depuis l'écran |
 | `COL_D` | abscisse de la colonne de texte — `None` = calculé |
@@ -162,6 +164,17 @@ colonne de droite pour libérer la place du portrait.
 
 Un rafraîchissement e-ink coûte environ deux secondes : le plugin ne repeint que
 lorsque l'image change réellement, jamais à chaque appel de `on_ui_update`.
+
+**Les répliques restent lisibles.** pwnagotchi remplace son statut à chaque
+événement — une phrase peut disparaître en une seconde, avant d'avoir été lue.
+Le plugin sort donc l'élément `status` du cadre et recopie son contenu dans le
+sien, au plus une fois toutes les `DUREE_PHRASE` secondes. Le cœur continue
+d'écrire librement ; seul l'affichage est temporisé.
+
+Écrire dans `status` provoquerait une boucle : chaque écriture marque un
+changement, qui déclenche un rendu, qui rappelle le plugin. Sur un e-ink à deux
+secondes par rafraîchissement, l'écran clignoterait sans fin. Le plugin n'y
+touche jamais.
 
 ## Dessiner ses propres visages
 

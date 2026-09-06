@@ -7,7 +7,7 @@ from PIL import Image
 import pwnagotchi.plugins as plugins
 import pwnagotchi.ui.faces as faces
 import pwnagotchi.ui.fonts as fonts
-from pwnagotchi.ui.components import Bitmap, LabeledValue
+from pwnagotchi.ui.components import Bitmap, LabeledValue, Text
 
 
 # Par defaut, le plugin deduit ces valeurs du layout de l'ecran detecte, ce qui
@@ -46,12 +46,14 @@ def _trace(message):
 
 class Neuromancer(plugins.Plugin):
     __author__ = 'wackojice'
-    __version__ = '3.1.0'
+    __version__ = '3.2.0'
     __license__ = 'GPL3'
     __description__ = 'Visages et voix Neuromancer + ecran ICE BROKEN, layout adaptatif'
 
     DOSSIER = '/usr/local/share/neuromancer'
     DUREE_PWN = 8          # secondes d'affichage apres un handshake
+    DUREE_PHRASE = 15      # duree minimale d'affichage d'une replique
+    LARGEUR_PHRASE = 20    # caracteres par ligne avant retour a la ligne
     DEFAUT = 'awake'       # image de repli si un etat n'a pas de fichier
 
     # chaque etat du pwnagotchi -> nom de fichier (sans .png)
@@ -86,6 +88,8 @@ class Neuromancer(plugins.Plugin):
         self.affiche = None     # nom de l'image actuellement posee
         self.haut = HAUT_DEFAUT
         self.col_d = COL_D_DEFAUT
+        self.phrase = None      # replique actuellement affichee
+        self.phrase_jusqua = 0  # instant avant lequel on ne la remplace pas
 
     # ---------------------------------------------------------------- chargement
 
@@ -183,7 +187,10 @@ class Neuromancer(plugins.Plugin):
         # le layout officiel met 'name' en (5,20) et 'status' en (125,20),
         # or notre portrait occupe x 6-82 : on rapatrie tout en colonne droite
         self._deplacer(ui, 'name', (self.col_d, self.haut))
-        self._deplacer(ui, 'status', (self.col_d, self.haut + 18))
+        # 'status' change bien trop vite pour etre lu : on le sort du cadre et
+        # on recopie son contenu nous-memes, a intervalle maitrise (voir
+        # on_ui_update). Le coeur continue d'y ecrire librement.
+        self._deplacer(ui, 'status', (0, 300))
 
         for element in ('friend_face', 'friend_name'):
             try:
@@ -198,6 +205,11 @@ class Neuromancer(plugins.Plugin):
         self.bitmap.image = self.images[self.DEFAUT]
         ui.add_element('nm_face', self.bitmap)
         _trace('element nm_face ajoute')
+
+        ui.add_element('nm_phrase', Text(
+            value='', position=(self.col_d, self.haut + 18),
+            color=0, font=fonts.Medium,
+            wrap=True, max_length=self.LARGEUR_PHRASE))
 
         ui.add_element('nm_statut', LabeledValue(
             color=0, label='', value='', position=(self.col_d, self.haut + 46),
@@ -215,13 +227,37 @@ class Neuromancer(plugins.Plugin):
 
     def on_unload(self, ui):
         with ui._lock:
-            for element in ('nm_face', 'nm_statut', 'nm_cible'):
+            for element in ('nm_face', 'nm_phrase', 'nm_statut', 'nm_cible'):
                 try:
                     ui.remove_element(element)
                 except Exception:
                     pass
 
     # ---------------------------------------------------------------- evenements
+
+    def _temporiser_phrase(self, ui):
+        """Recopie le statut du coeur, mais pas plus d'une fois par DUREE_PHRASE.
+
+        pwnagotchi remplace son statut a chaque evenement : une replique peut
+        disparaitre en une seconde, avant d'avoir ete lue. On ne lit donc la
+        sienne qu'une fois le delai ecoule. Ecrire dans 'status' provoquerait
+        une boucle de rafraichissement : on n'y touche jamais, on affiche dans
+        notre propre element.
+        """
+        if time.time() < self.phrase_jusqua:
+            return
+
+        try:
+            courant = ui.get('status')
+        except Exception:
+            return
+
+        if not courant or courant == self.phrase:
+            return
+
+        self.phrase = courant
+        self.phrase_jusqua = time.time() + self.DUREE_PHRASE
+        ui.set('nm_phrase', courant)
 
     def on_handshake(self, agent, filename, access_point, client_station):
         if 'ice' not in self.images:
@@ -233,6 +269,8 @@ class Neuromancer(plugins.Plugin):
     def on_ui_update(self, ui):
         if self.bitmap is None or not self.images:
             return
+
+        self._temporiser_phrase(ui)
 
         if time.time() < self.jusqua:
             voulu = 'ice'

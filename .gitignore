@@ -5,3 +5,8 @@ __pycache__/
 
 # sorties de la previsualisation locale
 preview/
+
+# Photos du materiel : elles montrent l'atelier et l'environnement personnel.
+# Ne versionner que des cliches faits pour etre publies.
+docs/photos/
+*.jpeg
