@@ -35,7 +35,20 @@ mkdir -p "$DOSSIER_PLUGINS"
 cp "$SOURCE/neuromancer.py" "$DOSSIER_PLUGINS/"
 
 echo "==> Installation de la voix Neuromancer"
-LOCALE_PWN="$(python3 -c 'import pwnagotchi, os; print(os.path.join(os.path.dirname(pwnagotchi.__file__), "locale"))' 2>/dev/null || true)"
+# pwnagotchi vit souvent dans un venv (/home/pi/.pwn) : l'import direct echoue
+# alors. On cherche donc le paquet sur le disque, venv compris.
+LOCALE_PWN=""
+for candidat in \
+    "$(python3 -c 'import pwnagotchi, os; print(os.path.join(os.path.dirname(pwnagotchi.__file__), "locale"))' 2>/dev/null || true)" \
+    /home/pi/.pwn/lib/python3*/site-packages/pwnagotchi/locale \
+    /usr/local/lib/python3*/dist-packages/pwnagotchi/locale \
+    /usr/lib/python3*/dist-packages/pwnagotchi/locale
+do
+    if [[ -n "$candidat" && -d "$candidat" ]]; then LOCALE_PWN="$candidat"; break; fi
+done
+if [[ -z "$LOCALE_PWN" ]]; then
+    LOCALE_PWN="$(find / -maxdepth 8 -type d -path '*pwnagotchi/locale' -not -path '*/proc/*' 2>/dev/null | head -1)"
+fi
 if [[ -n "$LOCALE_PWN" && -d "$LOCALE_PWN" ]]; then
     mkdir -p "$LOCALE_PWN/neuromancer/LC_MESSAGES"
     cp "$SOURCE/locale/neuromancer/LC_MESSAGES/voice.mo" "$LOCALE_PWN/neuromancer/LC_MESSAGES/"

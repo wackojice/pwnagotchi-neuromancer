@@ -34,6 +34,29 @@ détermine le layout que le plugin va détecter.
 
 ## 3. Installer
 
+### Sans câble de données : par la carte SD
+
+Si aucun câble micro-USB avec fils de données n'est disponible, on peut
+installer directement sur la carte, Pi éteint. C'est aussi plus prudent pour un
+premier essai : si le système ne démarre pas, il suffit de remonter la carte
+pour revenir en arrière — alors qu'un plantage au boot laisse sans accès SSH.
+
+```bash
+# carte dans le lecteur ; elle se monte en general toute seule
+lsblk -o NAME,SIZE,FSTYPE,LABEL,MOUNTPOINT
+
+sudo ./tools/install-sdcard.sh /run/media/$USER/rootfs
+
+# demonter proprement avant de retirer la carte
+udisksctl unmount -b /dev/sdX2
+udisksctl unmount -b /dev/sdX1
+```
+
+Le script affiche la configuration trouvée avant d'agir : vérifier qu'il s'agit
+bien du bon pwnagotchi.
+
+### En SSH
+
 ```bash
 git clone https://github.com/wackojice/pwnagotchi-neuromancer.git
 cd pwnagotchi-neuromancer
