@@ -1,6 +1,7 @@
 import os
 import time
 import logging
+import threading
 from collections import deque
 
 from PIL import Image
@@ -47,7 +48,7 @@ def _trace(message):
 
 class Neuromancer(plugins.Plugin):
     __author__ = 'wackojice'
-    __version__ = '3.3.0'
+    __version__ = '3.3.1'
     __license__ = 'GPL3'
     __description__ = 'Visages et voix Neuromancer + ecran ICE BROKEN, layout adaptatif'
 
@@ -93,6 +94,7 @@ class Neuromancer(plugins.Plugin):
         self.phrase = None      # replique actuellement affichee
         self.phrase_jusqua = 0  # instant avant lequel on ne la remplace pas
         self.vue = None         # dernier statut lu chez le coeur
+        self._verrou = threading.Lock()  # on_loaded et on_ui_setup sont concurrents
         self.file = deque(maxlen=self.FILE_MAX)  # repliques en attente
 
     # ---------------------------------------------------------------- chargement
@@ -104,9 +106,14 @@ class Neuromancer(plugins.Plugin):
         principal construit l'interface : on_ui_setup peut donc s'executer avant
         que les images soient la. Les deux appellent cette methode.
         """
-        if self.images:
-            return
+        # les deux hooks tournent dans des threads distincts et peuvent entrer
+        # ici en meme temps : sans verrou, les images sont chargees deux fois
+        with self._verrou:
+            if self.images:
+                return
+            self._charger_vraiment()
 
+    def _charger_vraiment(self):
         noms = set(self.MAPPING.values()) | {'ice', self.DEFAUT}
         for nom in noms:
             chemin = os.path.join(self.DOSSIER, nom + '.png')
