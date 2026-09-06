@@ -46,7 +46,7 @@ def _trace(message):
 
 class Neuromancer(plugins.Plugin):
     __author__ = 'wackojice'
-    __version__ = '3.0.2'
+    __version__ = '3.1.0'
     __license__ = 'GPL3'
     __description__ = 'Visages et voix Neuromancer + ecran ICE BROKEN, layout adaptatif'
 
@@ -89,7 +89,16 @@ class Neuromancer(plugins.Plugin):
 
     # ---------------------------------------------------------------- chargement
 
-    def on_loaded(self):
+    def _charger_images(self):
+        """Charge les PNG en memoire. Idempotente : ne fait rien si c'est deja fait.
+
+        pwnagotchi lance on_loaded dans un thread separe pendant que le thread
+        principal construit l'interface : on_ui_setup peut donc s'executer avant
+        que les images soient la. Les deux appellent cette methode.
+        """
+        if self.images:
+            return
+
         noms = set(self.MAPPING.values()) | {'ice', self.DEFAUT}
         for nom in noms:
             chemin = os.path.join(self.DOSSIER, nom + '.png')
@@ -103,8 +112,11 @@ class Neuromancer(plugins.Plugin):
             self.images = {}
             return
 
-        _trace('on_loaded : %d images chargees (%s)'
+        _trace('%d images chargees (%s)'
                % (len(self.images), ', '.join(sorted(self.images))))
+
+    def on_loaded(self):
+        self._charger_images()
 
     # ---------------------------------------------------------------- interface
 
@@ -155,8 +167,11 @@ class Neuromancer(plugins.Plugin):
 
     def on_ui_setup(self, ui):
         _trace('on_ui_setup appele')
+
+        # on_loaded a pu ne pas encore tourner : on charge nous-memes
+        self._charger_images()
         if not self.images:
-            _trace('on_ui_setup : aucune image, abandon')
+            _trace('on_ui_setup : chargement impossible, abandon')
             return
 
         self._calculer_layout(ui)
