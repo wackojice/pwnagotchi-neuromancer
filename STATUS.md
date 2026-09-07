@@ -22,10 +22,17 @@ Waveshare 2.13" v2.
       not lost
 - [x] Status bar: `NODES`, deck temperature, and the stock label collision fixed
 - [x] **First hardware test — successful**
+- [x] Config backed up on every path, previous language recorded
+- [x] `uninstall.sh` — install → uninstall → reinstall cycle verified on the
+      real SD card, including the language-restore path
 
 ## Open
 
-- [ ] Make the repository public
+- [ ] `install.sh` (the SSH route) has never run on hardware — no data cable
+      available. It shares its logic with `install-sdcard.sh`, which is
+      hardware-tested, but that is not proof
+- [ ] Layout tests on simulated geometries — the only tests that stand in for
+      hardware nobody owns
 - [ ] Unmapped states: `ANGRY`, `BROKEN` and `UPLOAD` fall back to `awake`.
       The recipe is known: solid black visor with a white motif knocked out
 - [ ] Random variants: pwnagotchi accepts several images per state and picks one
