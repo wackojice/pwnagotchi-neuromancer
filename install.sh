@@ -1,20 +1,19 @@
 #!/usr/bin/env bash
 #
 # Installs the Neuromancer theme on a pwnagotchi.
-# Run this ON the pwnagotchi (not from your computer).
+# Run this ON the pwnagotchi (not from your computer), from a clone of the
+# repository -- the script needs the images and the locale that sit next to it:
 #
-#   curl -sL https://raw.githubusercontent.com/wackojice/pwnagotchi-neuromancer/main/install.sh | sudo bash
-#
-# or, from a local clone:
-#
+#   git clone https://github.com/wackojice/pwnagotchi-neuromancer.git
+#   cd pwnagotchi-neuromancer
 #   sudo ./install.sh
 
 set -euo pipefail
 
-DOSSIER_IMAGES="/usr/local/share/neuromancer"
+IMAGES_DIR="/usr/local/share/neuromancer"
 # The scanned directory depends on the version: read it from the config,
 # then from the shipped defaults, then fall back to the 2.x location.
-DOSSIER_PLUGINS=""
+PLUGINS_DIR=""
 CONFIG="/etc/pwnagotchi/config.toml"
 SOURCE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -28,74 +27,86 @@ if [[ ! -f "$SOURCE/neuromancer.py" ]]; then
     exit 1
 fi
 
-echo "==> Images -> $DOSSIER_IMAGES"
-mkdir -p "$DOSSIER_IMAGES"
-cp "$SOURCE"/images/*.png "$DOSSIER_IMAGES/"
+echo "==> Images -> $IMAGES_DIR"
+mkdir -p "$IMAGES_DIR"
+cp "$SOURCE"/images/*.png "$IMAGES_DIR/"
 
-DOSSIER_PLUGINS="$(grep -hoP '^\s*main\.custom_plugins\s*=\s*"\K[^"]+' "$CONFIG" 2>/dev/null | head -1 || true)"
-if [[ -z "$DOSSIER_PLUGINS" ]]; then
-    DEFAUTS="$(find / -maxdepth 9 -name 'defaults.toml' -path '*pwnagotchi*' -not -path '*/proc/*' 2>/dev/null | head -1 || true)"
-    DOSSIER_PLUGINS="$(grep -hoP '^\s*main\.custom_plugins\s*=\s*"\K[^"]+' "$DEFAUTS" 2>/dev/null | head -1 || true)"
+PLUGINS_DIR="$(grep -hoP '^\s*main\.custom_plugins\s*=\s*"\K[^"]+' "$CONFIG" 2>/dev/null | head -1 || true)"
+if [[ -z "$PLUGINS_DIR" ]]; then
+    DEFAULTS="$(find / -maxdepth 9 -name 'defaults.toml' -path '*pwnagotchi*' -not -path '*/proc/*' 2>/dev/null | head -1 || true)"
+    PLUGINS_DIR="$(grep -hoP '^\s*main\.custom_plugins\s*=\s*"\K[^"]+' "$DEFAULTS" 2>/dev/null | head -1 || true)"
 fi
-DOSSIER_PLUGINS="${DOSSIER_PLUGINS:-/usr/local/share/pwnagotchi/custom-plugins/}"
+PLUGINS_DIR="${PLUGINS_DIR:-/usr/local/share/pwnagotchi/custom-plugins/}"
 
-echo "==> Plugin -> $DOSSIER_PLUGINS"
-mkdir -p "$DOSSIER_PLUGINS"
-cp "$SOURCE/neuromancer.py" "$DOSSIER_PLUGINS/"
-rm -rf "$DOSSIER_PLUGINS/__pycache__"
+echo "==> Plugin -> $PLUGINS_DIR"
+mkdir -p "$PLUGINS_DIR"
+cp "$SOURCE/neuromancer.py" "$PLUGINS_DIR/"
+rm -rf "$PLUGINS_DIR/__pycache__"
 # remove a copy left in the other possible location
-for autre in /usr/local/share/pwnagotchi/custom-plugins /etc/pwnagotchi/custom-plugins; do
-    if [[ "$autre" != "${DOSSIER_PLUGINS%/}" && -f "$autre/neuromancer.py" ]]; then
-        rm -f "$autre/neuromancer.py" "$autre/__pycache__/neuromancer."* 2>/dev/null || true
-        echo "  removed stale copy from $autre"
+for other in /usr/local/share/pwnagotchi/custom-plugins /etc/pwnagotchi/custom-plugins; do
+    if [[ "$other" != "${PLUGINS_DIR%/}" && -f "$other/neuromancer.py" ]]; then
+        rm -f "$other/neuromancer.py" "$other/__pycache__/neuromancer."* 2>/dev/null || true
+        echo "  removed stale copy from $other"
     fi
 done
 
 echo "==> Neuromancer voice"
 # pwnagotchi often lives in a venv (/home/pi/.pwn), where a plain import
 # fails. So look for the package on disk, venv included.
-LOCALE_PWN=""
+LOCALE_DIR=""
 for candidat in \
     "$(python3 -c 'import pwnagotchi, os; print(os.path.join(os.path.dirname(pwnagotchi.__file__), "locale"))' 2>/dev/null || true)" \
     /home/pi/.pwn/lib/python3*/site-packages/pwnagotchi/locale \
     /usr/local/lib/python3*/dist-packages/pwnagotchi/locale \
     /usr/lib/python3*/dist-packages/pwnagotchi/locale
 do
-    if [[ -n "$candidat" && -d "$candidat" ]]; then LOCALE_PWN="$candidat"; break; fi
+    if [[ -n "$candidat" && -d "$candidat" ]]; then LOCALE_DIR="$candidat"; break; fi
 done
-if [[ -z "$LOCALE_PWN" ]]; then
-    LOCALE_PWN="$(find / -maxdepth 8 -type d -path '*pwnagotchi/locale' -not -path '*/proc/*' 2>/dev/null | head -1 || true)"
+if [[ -z "$LOCALE_DIR" ]]; then
+    LOCALE_DIR="$(find / -maxdepth 8 -type d -path '*pwnagotchi/locale' -not -path '*/proc/*' 2>/dev/null | head -1 || true)"
 fi
-if [[ -n "$LOCALE_PWN" && -d "$LOCALE_PWN" ]]; then
-    mkdir -p "$LOCALE_PWN/neuromancer/LC_MESSAGES"
-    cp "$SOURCE/locale/neuromancer/LC_MESSAGES/voice.mo" "$LOCALE_PWN/neuromancer/LC_MESSAGES/"
-    echo "  installed in $LOCALE_PWN/neuromancer"
-    VOIX_OK=1
+if [[ -n "$LOCALE_DIR" && -d "$LOCALE_DIR" ]]; then
+    mkdir -p "$LOCALE_DIR/neuromancer/LC_MESSAGES"
+    cp "$SOURCE/locale/neuromancer/LC_MESSAGES/voice.mo" "$LOCALE_DIR/neuromancer/LC_MESSAGES/"
+    echo "  installed in $LOCALE_DIR/neuromancer"
+    VOICE_OK=1
 else
     echo "  ! pwnagotchi locale directory not found, voice not installed" >&2
-    VOIX_OK=0
+    VOICE_OK=0
 fi
 
 echo "==> Configuration"
 if [[ ! -f "$CONFIG" ]]; then
     echo "  $CONFIG not found - enable the plugin manually:" >&2
     echo "  main.plugins.neuromancer.enabled = true" >&2
-elif grep -q '^main\.plugins\.neuromancer\.enabled' "$CONFIG"; then
-    sed -i 's/^main\.plugins\.neuromancer\.enabled.*/main.plugins.neuromancer.enabled = true/' "$CONFIG"
-    echo "  existing line updated"
 else
-    cp "$CONFIG" "$CONFIG.bak.$(date +%s)"
-    printf '\nmain.plugins.neuromancer.enabled = true\n' >> "$CONFIG"
-    echo "  line added (backup: $CONFIG.bak.*)"
-fi
+    # Back up before touching anything, on every path. A reinstall used to skip
+    # this, which is exactly when there is most to lose.
+    BACKUP="$CONFIG.bak.$(date +%s)"
+    cp "$CONFIG" "$BACKUP"
+    echo "  backup: $BACKUP"
 
-if [[ "${VOIX_OK:-0}" == "1" ]]; then
-    if grep -qE '^main\.lang' "$CONFIG" 2>/dev/null; then
-        sed -i 's/^main\.lang.*/main.lang = "neuromancer"/' "$CONFIG"
-        echo "  language switched to neuromancer"
+    if grep -q '^main\.plugins\.neuromancer\.enabled' "$CONFIG"; then
+        sed -i 's/^main\.plugins\.neuromancer\.enabled.*/main.plugins.neuromancer.enabled = true/' "$CONFIG"
+        echo "  plugin already listed, enabled"
     else
-        printf 'main.lang = "neuromancer"\n' >> "$CONFIG"
-        echo "  neuromancer language added"
+        printf '\nmain.plugins.neuromancer.enabled = true\n' >> "$CONFIG"
+        echo "  plugin enabled"
+    fi
+
+    if [[ "${VOICE_OK:-0}" == "1" ]]; then
+        PREV_LANG="$(grep -oP '^\s*main\.lang\s*=\s*"\K[^"]+' "$CONFIG" 2>/dev/null | head -1 || true)"
+        if [[ -n "$PREV_LANG" && "$PREV_LANG" != "neuromancer" ]]; then
+            # remember it so uninstall.sh can restore it instead of guessing "en"
+            printf '%s\n' "$PREV_LANG" > "$IMAGES_DIR/.previous-lang"
+            echo "  language was \"$PREV_LANG\", switching to neuromancer"
+            sed -i 's/^main\.lang.*/main.lang = "neuromancer"/' "$CONFIG"
+        elif [[ -z "$PREV_LANG" ]]; then
+            printf 'main.lang = "neuromancer"\n' >> "$CONFIG"
+            echo "  neuromancer language added"
+        else
+            echo "  language already neuromancer"
+        fi
     fi
 fi
 

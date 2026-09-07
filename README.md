@@ -92,6 +92,21 @@ main.lang = "neuromancer"
 sudo systemctl restart pwnagotchi
 ```
 
+## Uninstall
+
+```bash
+sudo ./uninstall.sh
+sudo systemctl restart pwnagotchi
+```
+
+It disables the plugin, removes the plugin file, the images, the locale and the
+trace file, then restores the language you had before installing — recorded at
+install time rather than guessed.
+
+It is deliberately cautious: if you changed `main.lang` yourself after
+installing, it says so and leaves it alone. `config.toml` is backed up first, as
+with every run.
+
 ### Checking it works
 
 ```bash
@@ -111,7 +126,10 @@ rules, places the portrait there and derives the text column. If the portrait
 does not fit, images are scaled with `NEAREST` — no antialiasing, so the pixel
 art survives.
 
-Verified by simulation across four geometries:
+**Hardware-tested** on the Waveshare 2.13" v2 only. Everything below is
+**simulation-tested**: the geometry and scaling are verified against the real
+driver layouts, but no physical device confirmed them. They are expected to
+work — reports welcome either way.
 
 | Screen | Portrait | Text column |
 |---|---|---|
@@ -120,8 +138,9 @@ Verified by simulation across four geometries:
 | Waveshare 2.7" (264 × 176) | 76 × 80 at y=16 | x=95 |
 | Tri-color (212 × 104) | **scaled to 72 × 76**, y=14 | x=91 |
 
-Developed and tested on a **Waveshare 2.13" v2** with pwnagotchi 2.9.5.3, and
-against the [jayofelony](https://github.com/jayofelony/pwnagotchi) `noai` fork.
+Developed on a **Waveshare 2.13" v2** with pwnagotchi 2.9.5.3. The
+[jayofelony](https://github.com/jayofelony/pwnagotchi) `noai` fork was verified
+by reading its sources, not by running on it.
 
 To force coordinates, replace `None` with an integer at the top of the plugin:
 

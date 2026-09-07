@@ -132,13 +132,21 @@ really wedges, the pi stays blind forever.
 ## 7. Rolling back
 
 ```bash
-sudo sed -i 's/^main\.plugins\.neuromancer\.enabled.*/main.plugins.neuromancer.enabled = false/' /etc/pwnagotchi/config.toml
-sudo sed -i 's/^main\.lang.*/main.lang = "en"/' /etc/pwnagotchi/config.toml
+sudo ./uninstall.sh
 sudo systemctl restart pwnagotchi
 ```
 
-The pwnagotchi returns to its ASCII faces and original lines. Nothing in the
-project was modified, so the added files can stay where they are.
+Disables the plugin, removes the files it installed, and restores the language
+you had before — the value is recorded at install time, so it is restored rather
+than guessed. If you changed `main.lang` yourself afterwards, the script says so
+and leaves it alone.
+
+To disable without removing anything:
+
+```bash
+sudo sed -i 's/^main\.plugins\.neuromancer\.enabled.*/main.plugins.neuromancer.enabled = false/' /etc/pwnagotchi/config.toml
+sudo systemctl restart pwnagotchi
+```
 
 The installer left a timestamped backup:
 
