@@ -42,6 +42,43 @@ Complete and validated on **two different machines**: a 32-bit Pi Zero W running
       at random — two or three `awake` variants would make Case less static
 - [ ] Screens never dressed up: startup, session summary, manual mode
 
+## Idea: Molly, and two decks meeting
+
+One install, two characters. The theme would pick its face set and its voice
+from `main.name` — `Case` by default, `Molly` if the device is named for her —
+so a single repository covers both, and two people running it end up with
+different pwnagotchis rather than the same one twice.
+
+Molly needs her own lines, not a copy of Case's. He is the console cowboy who
+works from inside the matrix; she is the street samurai who works in the world,
+with mirrored lenses over her eyes and blades under her nails. Where Case says
+`Burn the ICE.`, Molly would say something with a body behind it.
+
+**And when the two are near each other**, pwnagotchi already provides
+everything needed:
+
+```python
+plugins.on('peer_detected', self, peer)   # fires when another pwnagotchi is seen
+peer.name()                               # its name -- Case, or Molly
+peer.first_encounter()                    # first meeting, or a reunion
+```
+
+The UI even keeps `friend_face` and `friend_name` elements for peers, which this
+theme currently removes to make room for the portrait — they could be reclaimed.
+
+So: detect a peer whose name is the other character, and show a shared image of
+the two for a few seconds, exactly as the ICE BROKEN screen already works. A
+dedicated line for the meeting would carry it — they do work together in the
+novel.
+
+A real gameplay perk would mean touching pwnagotchi's own logic, which a theme
+should not do. The meeting screen and the line are enough.
+
+**Effort:** the two-character switch is mostly refactoring what exists (a second
+image set, a second locale, a lookup on `main.name`). The meeting needs one hook
+and one image. The hard part is neither — it is drawing Molly well enough that
+she stands beside Case.
+
 ## Verified in the source, not assumed
 
 Read-only reference clone in `~/Work/reference/pwnagotchi` (jayofelony, `noai`).
