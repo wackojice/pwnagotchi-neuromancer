@@ -1,5 +1,9 @@
 # pwnagotchi-neuromancer
 
+> *The sky above the port was the color of television, tuned to a dead channel.*
+>
+> — William Gibson, *Neuromancer* (1984)
+
 A theme for [pwnagotchi](https://pwnagotchi.ai/): the ASCII face is replaced by
 a cyberpunk pixel-art portrait, the status lines speak William Gibson's
 language, and an **ICE BROKEN** screen fires on every captured handshake.
