@@ -189,6 +189,18 @@ It is deliberately cautious: if you changed `main.lang` yourself after
 installing, it says so and leaves it alone. `config.toml` is backed up first, as
 with every run.
 
+### First boot: expect one restart
+
+After installing, the first start is not the smooth one. Case appears, sits
+still for twenty or thirty seconds, then the screen clears and the whole thing
+comes back — and *that* run is the one that works, with the face changing and
+the lines scrolling.
+
+Nothing is wrong: pwnagotchi restarts itself once after finding a modified
+`config.toml`. Let it. On a Pi Zero W the two boots together can take several
+minutes, since the display only refreshes on a real change and gives no sign of
+progress meanwhile.
+
 ### Checking it works
 
 ```bash

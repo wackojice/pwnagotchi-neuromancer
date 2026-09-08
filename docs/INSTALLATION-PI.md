@@ -73,7 +73,18 @@ The script:
    (backing up `config.toml` first)
 5. restarts the service
 
-## 4. Watch it start
+## 4. First boot: one restart is expected
+
+Case will appear, stay frozen for twenty to thirty seconds, and the device will
+restart itself. The run after that is the working one.
+
+This is pwnagotchi reacting to a changed `config.toml`, not a failure. Combined
+with a slow board, the two boots can take several minutes before anything moves
+on screen — and an e-ink panel gives no hint that work is happening.
+
+Judge it on the second run, not the first.
+
+## 5. Watch it start
 
 This is the step that matters. In another SSH session:
 
@@ -99,7 +110,7 @@ The same events are written to **`neuromancer-trace.txt` on the boot partition**
 flushed immediately. Pull the card and read it from any computer — it survives
 an unclean shutdown, unlike the journal, which stays in cache.
 
-## 5. Troubleshooting
+## 6. Troubleshooting
 
 | Message | Cause | Fix |
 |---|---|---|
@@ -126,7 +137,10 @@ first render: image awake
 If the screen stays blank: `sudo systemctl status pwnagotchi`, then
 `journalctl -u pwnagotchi -n 100 --no-pager`.
 
-## 6. The pi restarts on its own
+## 7. The pi restarts on its own, over and over
+
+Different from the single restart in step 4: that one happens once, right after
+installing. This is a loop, every minute or so, indefinitely.
 
 Not a theme problem. pwnagotchi restarts itself when it sees no access point
 for several epochs:
@@ -146,7 +160,7 @@ main.mon_max_blind_epochs = 15
 `main.no_restart = true` disables it entirely — not recommended: if the driver
 really wedges, the pi stays blind forever.
 
-## 7. Rolling back
+## 8. Rolling back
 
 ```bash
 sudo ./uninstall.sh
