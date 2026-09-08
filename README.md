@@ -108,17 +108,58 @@ leaves you with no SSH access at all.
 
 ### Manual install
 
+Four things get installed: the images, the plugin, the voice, and two config
+keys. Miss the third and the faces appear but pwnagotchi keeps speaking plain
+English.
+
 ```bash
+# 1. images
 sudo mkdir -p /usr/local/share/neuromancer
 sudo cp images/*.png /usr/local/share/neuromancer/
-sudo cp neuromancer.py "$(grep -oP '^\s*main\.custom_plugins\s*=\s*"\K[^"]+' /etc/pwnagotchi/config.toml || echo /usr/local/share/pwnagotchi/custom-plugins/)"
+
+# 2. plugin -- into whichever directory your version scans
+PLUGINS="$(grep -oP '^\s*(main\.)?custom_plugins\s*=\s*"\K[^"]+' /etc/pwnagotchi/config.toml 2>/dev/null | head -1)"
+PLUGINS="${PLUGINS:-/usr/local/share/pwnagotchi/custom-plugins/}"
+sudo mkdir -p "$PLUGINS" && sudo cp neuromancer.py "$PLUGINS"
+
+# 3. voice -- next to pwnagotchi's other locales, wherever its package lives
+LOCALE="$(sudo find / -maxdepth 8 -type d -path '*pwnagotchi/locale' 2>/dev/null | head -1)"
+sudo mkdir -p "$LOCALE/neuromancer/LC_MESSAGES"
+sudo cp locale/neuromancer/LC_MESSAGES/voice.mo "$LOCALE/neuromancer/LC_MESSAGES/"
 ```
 
-Then in `/etc/pwnagotchi/config.toml`:
+**4. enable both in `/etc/pwnagotchi/config.toml`** — back it up first, and mind
+the format your file already uses. pwnagotchi rewrites configs into the second
+form after its first run, so check before editing:
+
+<table>
+<tr><th>Flat keys</th><th>Sections</th></tr>
+<tr><td>
 
 ```toml
 main.plugins.neuromancer.enabled = true
 main.lang = "neuromancer"
+```
+
+</td><td>
+
+```toml
+[main]
+lang = "neuromancer"
+
+[main.plugins.neuromancer]
+enabled = true
+```
+
+</td></tr>
+</table>
+
+Mixing them silently fails: a flat key appended to a file using sections becomes
+part of whatever section precedes it, and the plugin never loads. If in doubt,
+let the script do it:
+
+```bash
+sudo python3 tools/configure.py /etc/pwnagotchi/config.toml enable
 ```
 
 ```bash
