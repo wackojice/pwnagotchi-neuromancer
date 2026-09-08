@@ -84,14 +84,18 @@ journalctl -u pwnagotchi -f | grep -i neuromancer
 **What you want to see:**
 
 ```
-[neuromancer] on_ui_setup appele
-[neuromancer] 6 images chargees : awake, happy, ice, look_l, look_r, sleep
-[neuromancer] layout : ecran 250x122, portrait en (6,16), texte en x=95
-[neuromancer] element nm_face ajoute
-[neuromancer] premier rendu : image awake
+[neuromancer] on_ui_setup called
+[neuromancer] 6 images loaded (awake, happy, ice, look_l, look_r, sleep)
+[neuromancer] layout: screen 250x122, portrait at (6,16), text at x=95
+[neuromancer] nm_face element added
+[neuromancer] first render: image awake
 ```
 
-The same lines are written to **`neuromancer-trace.txt` on the boot partition**,
+The `screen WxH` line confirms the layout was detected from your own driver, so
+the numbers will differ on another display.
+
+The same events are written to **`neuromancer-trace.txt` on the boot partition**
+(timestamped, without the `[neuromancer]` prefix),
 flushed immediately. Pull the card and read it from any computer — it survives
 an unclean shutdown, unlike the journal, which stays in cache.
 
@@ -99,12 +103,25 @@ an unclean shutdown, unlike the journal, which stays in cache.
 
 | Message | Cause | Fix |
 |---|---|---|
-| `awake.png est obligatoire, plugin inactif` | images missing or unreadable | check `ls /usr/local/share/neuromancer/` |
-| `layout illisible (...)` | driver exposes no `line1`/`line2` | harmless, 2.13" defaults are used |
-| `deplacement de <name> impossible` | internal structure differs | that element will overlap the portrait; adjust `_deplacer` |
-| `bande utile trop petite` | very small screen | force `HAUT` and `COL_D` in the plugin |
-| nothing at all in the journal | plugin not loaded | check `main.plugins.neuromancer.enabled = true`, and that the plugin sits in the directory `main.custom_plugins` names |
-| trace stops after `on_ui_setup` | images failed to load | check the image path and permissions |
+| `awake.png is required, plugin inactive` | images missing or unreadable | check `ls /usr/local/share/neuromancer/` |
+| `<name>.png missing` | one image absent; the rest still work | copy it from `images/` |
+| `layout unreadable (...), using defaults` | driver exposes no `line1`/`line2` | harmless, the 2.13" defaults are used |
+| `cannot move <name>` | internal UI structure differs | that element will overlap the portrait; adjust `_move` |
+| `usable band too small (WxH)` | very small screen | force `TOP` and `COL_R` at the top of the plugin |
+| `images scaled to WxH` | portrait did not fit | informational, the layout adapted itself |
+| `on_ui_setup: cannot load images, giving up` | images unreadable at setup time | check the path and permissions of `/usr/local/share/neuromancer/` |
+| nothing at all in the journal | plugin not loaded | check that the plugin is enabled, and that it sits in the directory `main.custom_plugins` names. If your config uses `[sections]`, a flat `main.plugins...` key will not take effect |
+| trace stops after `on_ui_setup called` | images failed to load | same as above |
+
+A healthy startup looks like this, in order:
+
+```
+on_ui_setup called
+6 images loaded (awake, happy, ice, look_l, look_r, sleep)
+layout: screen 250x122, portrait at (6,16), text at x=95
+nm_face element added
+first render: image awake
+```
 
 If the screen stays blank: `sudo systemctl status pwnagotchi`, then
 `journalctl -u pwnagotchi -n 100 --no-pager`.
