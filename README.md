@@ -196,10 +196,14 @@ still for twenty or thirty seconds, then the screen clears and the whole thing
 comes back — and *that* run is the one that works, with the face changing and
 the lines scrolling.
 
-Nothing is wrong: pwnagotchi restarts itself once after finding a modified
+Nothing is wrong: pwnagotchi restarts itself after finding a modified
 `config.toml`. Let it. On a Pi Zero W the two boots together can take several
 minutes, since the display only refreshes on a real change and gives no sign of
 progress meanwhile.
+
+Some setups do this on **every** boot, not just the first — one device tested
+here had been doing so for months before the theme was ever installed. As long
+as the second run works, it is a pwnagotchi habit rather than a theme problem.
 
 ### Checking it works
 

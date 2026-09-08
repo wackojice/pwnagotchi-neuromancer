@@ -84,6 +84,18 @@ on screen — and an e-ink panel gives no hint that work is happening.
 
 Judge it on the second run, not the first.
 
+Some devices repeat this on every boot. One tested here turned out to have done
+so for five months before the theme existed, which its own logs showed. If yours
+does it too, check its history before blaming the install:
+
+```bash
+grep -c 'Re|Started' /etc/pwnagotchi/log/pwnagotchi.log
+```
+
+Note that a config mounting the log directory in RAM (`[fs.memory.mounts.log]`)
+loses whatever was not synced before the last unclean shutdown, so recent
+entries may simply be missing.
+
 ## 5. Watch it start
 
 This is the step that matters. In another SSH session:
