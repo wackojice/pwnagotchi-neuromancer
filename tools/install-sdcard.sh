@@ -31,7 +31,9 @@ if [[ ! -f "$CONFIG" ]]; then
 fi
 
 echo "==> Target: $SD_ROOT"
-grep -E '^main\.name|^ui\.display\.type|^ui\.invert' "$CONFIG" | sed 's/^/    /'
+# both config styles: flat keys, or [sections] with bare keys
+grep -E '^\s*(main\.)?name *=|^\s*(ui\.display\.)?type *=|^\s*(ui\.)?invert *=' \
+     "$CONFIG" 2>/dev/null | head -4 | sed 's/^/    /' || true
 
 # --- images
 DEST_IMG="$SD_ROOT/usr/local/share/neuromancer"

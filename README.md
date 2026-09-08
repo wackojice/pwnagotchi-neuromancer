@@ -126,10 +126,19 @@ rules, places the portrait there and derives the text column. If the portrait
 does not fit, images are scaled with `NEAREST` — no antialiasing, so the pixel
 art survives.
 
-**Hardware-tested** on the Waveshare 2.13" v2 only. Everything below is
-**simulation-tested**: the geometry and scaling are verified against the real
-driver layouts, but no physical device confirmed them. They are expected to
-work — reports welcome either way.
+**Hardware-tested on two different machines:**
+
+| | Board | pwnagotchi | Arch | Display |
+|---|---|---|---|---|
+| 1 | Pi Zero W | 2.9.5.3 | armv6l (32-bit) | `waveshare_2` |
+| 2 | 64-bit Pi | 2.9.5.4 | aarch64 (64-bit) | `waveshare_4`, rotated 180° |
+
+Both run the same plugin unchanged: the layout is derived from whatever the
+active driver reports, and the plugin is pure Python with no compiled parts, so
+architecture makes no difference.
+
+The geometries below are **simulation-tested** — verified against the real
+driver layouts, but not confirmed on a physical device. Reports welcome.
 
 | Screen | Portrait | Text column |
 |---|---|---|
@@ -138,9 +147,14 @@ work — reports welcome either way.
 | Waveshare 2.7" (264 × 176) | 76 × 80 at y=16 | x=95 |
 | Tri-color (212 × 104) | **scaled to 72 × 76**, y=14 | x=91 |
 
-Developed on a **Waveshare 2.13" v2** with pwnagotchi 2.9.5.3. The
-[jayofelony](https://github.com/jayofelony/pwnagotchi) `noai` fork was verified
-by reading its sources, not by running on it.
+Developed on a **Waveshare 2.13" v2** with pwnagotchi 2.9.5.3, then confirmed on
+a second device running **2.9.5.4 on 64-bit** with a `waveshare_4` panel mounted
+upside down.
+
+> **Note for Pi Zero W (v1) owners:** pwnagotchi no longer ships 32-bit images
+> past 2.9.5.6, and the maintainer has stated 32-bit is unsupported. The last
+> workable release for these boards is **2.9.5.3**, which is what device 1 above
+> runs. This theme works there.
 
 To force coordinates, replace `None` with an integer at the top of the plugin:
 

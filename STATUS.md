@@ -4,9 +4,9 @@ Updated **2026-09-06**.
 
 ## In one line
 
-Complete and validated on hardware: faces, voice, ICE BROKEN screen, deck
-temperature and adaptive layout all run on a Raspberry Pi Zero with a
-Waveshare 2.13" v2.
+Complete and validated on **two different machines**: a 32-bit Pi Zero W running
+2.9.5.3 with a `waveshare_2` panel, and a 64-bit board running 2.9.5.4 with a
+`waveshare_4` panel mounted upside down. Same plugin, unchanged, on both.
 
 ## Done
 
@@ -22,6 +22,9 @@ Waveshare 2.13" v2.
       not lost
 - [x] Status bar: `NODES`, deck temperature, and the stock label collision fixed
 - [x] **First hardware test — successful**
+- [x] **Second machine, different everything** — 64-bit, pwnagotchi 2.9.5.4,
+      `waveshare_4` display at 180°. Faces animate, lines scroll, layout correct
+- [x] Both config.toml layouts supported (flat keys and `[sections]`)
 - [x] Config backed up on every path, previous language recorded
 - [x] `uninstall.sh` — install → uninstall → reinstall cycle verified on the
       real SD card, including the language-restore path
@@ -30,7 +33,7 @@ Waveshare 2.13" v2.
 
 - [ ] `install.sh` (the SSH route) has never run on hardware — no data cable
       available. It shares its logic with `install-sdcard.sh`, which is
-      hardware-tested, but that is not proof
+      hardware-tested on two machines, but that is not proof
 - [ ] Layout tests on simulated geometries — the only tests that stand in for
       hardware nobody owns
 - [ ] Unmapped states: `ANGRY`, `BROKEN` and `UPLOAD` fall back to `awake`.
@@ -65,6 +68,19 @@ Read-only reference clone in `~/Work/reference/pwnagotchi` (jayofelony, `noai`).
   long-lived lines and hid the short ones entirely.
 - **`PWND` kept.** It is the counter the community recognises; renaming it cost
   more in clarity than it gained in style.
+
+## The bug the second machine caught
+
+Its `config.toml` used the `[section]` layout — which is what pwnagotchi writes
+after its first run — while the installer only ever appended flat keys. The key
+would have landed inside whatever section came last: valid TOML, no error, and
+the plugin silently never enabled.
+
+Two smaller ones surfaced the same way: a `grep` for flat-format keys that
+aborted the script under `set -e` when it matched nothing, and the same class of
+bug already fixed once earlier. The lesson is the same each time — anything that
+reads a config must handle both layouts, and every `grep` that is allowed to
+find nothing needs `|| true`.
 
 ## The bug that cost the most
 
