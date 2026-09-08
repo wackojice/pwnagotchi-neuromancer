@@ -10,11 +10,11 @@ language, and an **ICE BROKEN** screen fires on every captured handshake.
 
 <img src="docs/photos/book.jpg" width="620" alt="A pwnagotchi running the theme, resting on a copy of Neuromancer">
 
-| Scanning | Deauthenticating | Booting up |
-|---|---|---|
-| ![Scanning the grid](docs/photos/scanning.jpg) | ![Flatlining](docs/photos/deauth.jpg) | ![No more mister nice deck](docs/photos/booting.jpg) |
+| Scanning | Deauthenticating |
+|---|---|
+| ![Scanning the grid](docs/photos/scanning.jpg) | ![Flatlining](docs/photos/deauth.jpg) |
 
-Three of the six faces, and three of the 104 lines. The rest turn up as your
+Two of the six faces, and two of the 104 lines. The rest turn up as your
 pwnagotchi lives its day — including the **ICE BROKEN** screen, which you will
 meet the first time it breaks a handshake.
 
