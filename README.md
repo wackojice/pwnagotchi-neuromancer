@@ -14,6 +14,10 @@ language, and an **ICE BROKEN** screen fires on every captured handshake.
 |---|---|---|
 | ![Scanning the grid](docs/photos/scanning.jpg) | ![Flatlining](docs/photos/deauth.jpg) | ![No more mister nice deck](docs/photos/booting.jpg) |
 
+Three of the six faces, and three of the 104 lines. The rest turn up as your
+pwnagotchi lives its day — including the **ICE BROKEN** screen, which you will
+meet the first time it breaks a handshake.
+
 ## What it does
 
 - replaces the 19 ASCII faces with 5 one-bit pixel-art portraits
