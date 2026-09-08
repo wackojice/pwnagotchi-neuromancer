@@ -61,17 +61,50 @@ version scans, installs the voice next to the other locales, enables both in
 
 ### No USB data cable? Install from the SD card
 
-With the pi powered off and its card mounted on your computer:
+Everything here runs **on your computer**, not on the pi. Power the pi off and
+put its card in your card reader — most desktops mount both partitions
+automatically as `bootfs` and `rootfs`.
 
 ```bash
+# 1. clone this repository on your computer
+git clone https://github.com/wackojice/pwnagotchi-neuromancer.git
+cd pwnagotchi-neuromancer
+
+# 2. find where the card is mounted
 lsblk -o NAME,SIZE,FSTYPE,LABEL,MOUNTPOINT
+
+# 3. install onto it, passing the rootfs mountpoint
 sudo ./tools/install-sdcard.sh /run/media/$USER/rootfs
-udisksctl unmount -b /dev/sdX2
+
+# 4. unmount BOTH partitions before pulling the card
+udisksctl unmount -b /dev/sdX2    # rootfs
+udisksctl unmount -b /dev/sdX1    # bootfs
 ```
 
+Replace `sdX` with your card's actual device from step 2 — and double-check it,
+since `dd`-style mistakes on the wrong disk are unforgiving.
+
+The script prints the configuration it found before touching anything:
+
+```
+==> Target: /run/media/you/rootfs
+    name = "your-pwnagotchi"
+    type = "waveshare_2"
+==> Images -> /usr/local/share/neuromancer
+==> Plugin -> /usr/local/share/pwnagotchi/custom-plugins/
+==> Neuromancer voice
+==> Configuration
+    backup: config.toml.bak.*
+    plugin enabled (sections style config)
+    language was "en", switched to neuromancer
+```
+
+Check that the name and display are the ones you expect before letting it
+continue.
+
 This is also the safer route for a first attempt: if the system fails to boot,
-you just remount the card and undo it — whereas a boot failure leaves you with
-no SSH access.
+you just put the card back in your computer and undo it — whereas a boot failure
+leaves you with no SSH access at all.
 
 ### Manual install
 
