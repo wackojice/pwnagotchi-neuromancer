@@ -56,6 +56,7 @@ echo "==> Neuromancer voice"
 LOCALE_DIR=""
 for candidat in \
     "$(python3 -c 'import pwnagotchi, os; print(os.path.join(os.path.dirname(pwnagotchi.__file__), "locale"))' 2>/dev/null || true)" \
+    /opt/.pwn/lib/python3*/site-packages/pwnagotchi/locale \
     /home/pi/.pwn/lib/python3*/site-packages/pwnagotchi/locale \
     /usr/local/lib/python3*/dist-packages/pwnagotchi/locale \
     /usr/lib/python3*/dist-packages/pwnagotchi/locale
@@ -86,27 +87,19 @@ else
     cp "$CONFIG" "$BACKUP"
     echo "  backup: $BACKUP"
 
-    if grep -q '^main\.plugins\.neuromancer\.enabled' "$CONFIG"; then
-        sed -i 's/^main\.plugins\.neuromancer\.enabled.*/main.plugins.neuromancer.enabled = true/' "$CONFIG"
-        echo "  plugin already listed, enabled"
-    else
-        printf '\nmain.plugins.neuromancer.enabled = true\n' >> "$CONFIG"
-        echo "  plugin enabled"
-    fi
+    # config.toml comes in two styles (flat keys, or [sections]) and pwnagotchi
+    # rewrites it into the second on its own. Appending a flat key to a file
+    # using sections would silently attach it to the last section, leaving the
+    # plugin disabled. configure.py handles both.
+    OUT="$(python3 "$SOURCE/tools/configure.py" "$CONFIG" enable)"
+    echo "  plugin enabled ($(echo "$OUT" | grep -oP 'STYLE=\K.*') style config)"
 
-    if [[ "${VOICE_OK:-0}" == "1" ]]; then
-        PREV_LANG="$(grep -oP '^\s*main\.lang\s*=\s*"\K[^"]+' "$CONFIG" 2>/dev/null | head -1 || true)"
-        if [[ -n "$PREV_LANG" && "$PREV_LANG" != "neuromancer" ]]; then
-            # remember it so uninstall.sh can restore it instead of guessing "en"
-            printf '%s\n' "$PREV_LANG" > "$IMAGES_DIR/.previous-lang"
-            echo "  language was \"$PREV_LANG\", switching to neuromancer"
-            sed -i 's/^main\.lang.*/main.lang = "neuromancer"/' "$CONFIG"
-        elif [[ -z "$PREV_LANG" ]]; then
-            printf 'main.lang = "neuromancer"\n' >> "$CONFIG"
-            echo "  neuromancer language added"
-        else
-            echo "  language already neuromancer"
-        fi
+    PREV_LANG="$(echo "$OUT" | grep -oP 'PREVIOUS_LANG=\K.*')"
+    if [[ "${VOICE_OK:-0}" == "1" && -n "$PREV_LANG" ]]; then
+        printf '%s\n' "$PREV_LANG" > "$IMAGES_DIR/.previous-lang"
+        echo "  language was \"$PREV_LANG\", switched to neuromancer"
+    elif [[ "${VOICE_OK:-0}" == "1" ]]; then
+        echo "  language already neuromancer"
     fi
 fi
 

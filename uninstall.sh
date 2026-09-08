@@ -27,22 +27,12 @@ if [[ -f "$CONFIG" ]]; then
     cp "$CONFIG" "$BACKUP"
     echo "  backup: $BACKUP"
 
-    if grep -q '^main\.plugins\.neuromancer\.enabled' "$CONFIG"; then
-        sed -i 's/^main\.plugins\.neuromancer\.enabled.*/main.plugins.neuromancer.enabled = false/' "$CONFIG"
-        echo "  plugin disabled"
-    fi
-
-    # Only touch main.lang if it is still ours: a language set by the user after
-    # installing must survive untouched.
-    CURRENT_LANG="$(grep -oP '^\s*main\.lang\s*=\s*"\K[^"]+' "$CONFIG" 2>/dev/null | head -1 || true)"
-    if [[ "$CURRENT_LANG" == "neuromancer" ]]; then
-        PREV_LANG="$(cat "$IMAGES_DIR/.previous-lang" 2>/dev/null || true)"
-        PREV_LANG="${PREV_LANG:-en}"
-        sed -i "s/^main\.lang.*/main.lang = \"$PREV_LANG\"/" "$CONFIG"
-        echo "  language restored to \"$PREV_LANG\""
-    elif [[ -n "$CURRENT_LANG" ]]; then
-        echo "  language is \"$CURRENT_LANG\", not ours: left untouched"
-    fi
+    PREV_LANG="$(cat "$IMAGES_DIR/.previous-lang" 2>/dev/null || true)"
+    PREV_LANG="${PREV_LANG:-en}"
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    OUT="$(python3 "$SCRIPT_DIR/tools/configure.py" "$CONFIG" disable "$PREV_LANG")"
+    echo "  plugin disabled ($(echo "$OUT" | grep -oP 'STYLE=\K.*') style config)"
+    echo "  language restored to \"$PREV_LANG\" if it was still ours"
 else
     echo "  $CONFIG not found, nothing to change"
 fi
@@ -63,7 +53,8 @@ done
 
 echo "==> Voice"
 LOCALE_FOUND=0
-for dir in "$ROOT"/home/pi/.pwn/lib/python3*/site-packages/pwnagotchi/locale \
+for dir in "$ROOT"/opt/.pwn/lib/python3*/site-packages/pwnagotchi/locale \
+           "$ROOT"/home/pi/.pwn/lib/python3*/site-packages/pwnagotchi/locale \
            "$ROOT"/usr/local/lib/python3*/dist-packages/pwnagotchi/locale \
            "$ROOT"/usr/lib/python3*/dist-packages/pwnagotchi/locale
 do

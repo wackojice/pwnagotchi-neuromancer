@@ -83,23 +83,15 @@ echo "==> Configuration"
 cp "$CONFIG" "$CONFIG.bak.$(date +%s)"
 echo "    backup: $(basename "$CONFIG").bak.*"
 
-if grep -q '^main\.plugins\.neuromancer\.enabled' "$CONFIG"; then
-    sed -i 's/^main\.plugins\.neuromancer\.enabled.*/main.plugins.neuromancer.enabled = true/' "$CONFIG"
-else
-    printf '\nmain.plugins.neuromancer.enabled = true\n' >> "$CONFIG"
-fi
-echo "    plugin enabled"
+# Two config styles exist (flat keys or [sections]); configure.py handles both.
+OUT="$(python3 "$SOURCE/tools/configure.py" "$CONFIG" enable)"
+echo "    plugin enabled ($(echo "$OUT" | grep -oP 'STYLE=\K.*') style config)"
 
 if [[ "$VOICE_OK" == "1" ]]; then
-    PREV_LANG="$(grep -oP '^\s*main\.lang\s*=\s*"\K[^"]+' "$CONFIG" 2>/dev/null | head -1 || true)"
-    if [[ -n "$PREV_LANG" && "$PREV_LANG" != "neuromancer" ]]; then
-        # remember it so uninstall.sh can restore it instead of guessing "en"
+    PREV_LANG="$(echo "$OUT" | grep -oP 'PREVIOUS_LANG=\K.*')"
+    if [[ -n "$PREV_LANG" ]]; then
         printf '%s\n' "$PREV_LANG" > "$DEST_IMG/.previous-lang"
-        echo "    language was \"$PREV_LANG\", switching to neuromancer"
-        sed -i 's/^main\.lang.*/main.lang = "neuromancer"/' "$CONFIG"
-    elif [[ -z "$PREV_LANG" ]]; then
-        printf 'main.lang = "neuromancer"\n' >> "$CONFIG"
-        echo "    neuromancer language added"
+        echo "    language was \"$PREV_LANG\", switched to neuromancer"
     else
         echo "    language already neuromancer"
     fi
