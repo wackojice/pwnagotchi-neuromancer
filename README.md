@@ -4,7 +4,7 @@ A theme for [pwnagotchi](https://pwnagotchi.ai/): the ASCII face is replaced by
 a cyberpunk pixel-art portrait, the status lines speak William Gibson's
 language, and an **ICE BROKEN** screen fires on every captured handshake.
 
-![Case on a Waveshare 2.13"](docs/photos/scanning.jpg)
+<img src="docs/photos/scanning.jpg" width="620" alt="Case on a Waveshare 2.13 inch display">
 
 | Deauthenticating a client | Booting up |
 |---|---|
