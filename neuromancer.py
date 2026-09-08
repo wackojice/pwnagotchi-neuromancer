@@ -47,7 +47,7 @@ def _trace(message):
 
 class Neuromancer(plugins.Plugin):
     __author__ = 'wackojice'
-    __version__ = '3.5.0'
+    __version__ = '3.6.0'
     __license__ = 'GPL3'
     __description__ = 'Neuromancer faces and voice, ICE BROKEN screen, adaptive layout'
 
