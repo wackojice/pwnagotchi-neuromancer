@@ -233,8 +233,8 @@ upside down.
 To force coordinates, replace `None` with an integer at the top of the plugin:
 
 ```python
-HAUT = None    # auto: just below the top rule
-COL_D = None   # auto: right after the portrait
+TOP = None    # auto: just below the top rule
+COL_R = None   # auto: right after the portrait
 ```
 
 ## The voice
@@ -294,7 +294,7 @@ repositions the elements and widens the spacing.
 ## Deck temperature
 
 A `DECK 44°C` line shows the SoC temperature, read from
-`/sys/class/thermal/thermal_zone0/temp` every `DECK_INTERVALLE` seconds. Useful
+`/sys/class/thermal/thermal_zone0/temp` every `DECK_INTERVAL` seconds. Useful
 on a Pi Zero, and fitting for the vocabulary — a cyberdeck running hot.
 
 Turn it off with `DECK_TEMPERATURE = False`.
@@ -320,17 +320,17 @@ At the top of `neuromancer.py`:
 
 | Constant | Purpose |
 |---|---|
-| `DOSSIER` | where the PNGs live |
-| `DUREE_PWN` | seconds the ICE BROKEN screen stays up |
-| `DUREE_PHRASE` | minimum seconds a line stays readable (default: 6) |
-| `LARGEUR_PHRASE` | characters per line before wrapping |
-| `FILE_MAX` | lines held in the queue (default: 3) |
-| `DEFAUT` | fallback image |
-| `HAUT` / `COL_D` | portrait and text column — `None` means auto |
-| `MARGE_X` / `GOUTTIERE` | left margin and gap between portrait and text |
-| `LIBELLES` | status-bar labels to rewrite, with position and spacing |
+| `FOLDER` | where the PNGs live |
+| `PWN_SECONDS` | seconds the ICE BROKEN screen stays up |
+| `LINE_SECONDS` | minimum seconds a line stays readable (default: 6) |
+| `LINE_WIDTH` | characters per line before wrapping |
+| `QUEUE_MAX` | lines held in the queue (default: 3) |
+| `FALLBACK` | fallback image |
+| `TOP` / `COL_R` | portrait and text column — `None` means auto |
+| `MARGIN_X` / `GUTTER` | left margin and gap between portrait and text |
+| `LABELS` | status-bar labels to rewrite, with position and spacing |
 | `DECK_TEMPERATURE` | show the SoC temperature |
-| `DECK_INTERVALLE` | seconds between temperature readings |
+| `DECK_INTERVAL` | seconds between temperature readings |
 
 ## How it works
 
@@ -348,8 +348,8 @@ image actually changes, never on every `on_ui_update` call.
 their lifetimes are wildly uneven: `Waiting for 40s` lasts forty seconds,
 `I'm bored...` lasts one. Sampling the status at a fixed interval would only
 ever show the slow ones. So the plugin moves `status` out of frame, watches
-every change and queues it, then advances one line per `DUREE_PHRASE` seconds.
-The queue is capped at `FILE_MAX`: under heavy activity the oldest lines are
+every change and queues it, then advances one line per `LINE_SECONDS` seconds.
+The queue is capped at `QUEUE_MAX`: under heavy activity the oldest lines are
 dropped rather than letting the display fall behind reality.
 
 Writing back into `status` would be simpler but causes a refresh loop: each
