@@ -32,15 +32,15 @@ yet, start there:
 - [jayofelony/pwnagotchi](https://github.com/jayofelony/pwnagotchi) — the
   actively maintained fork, with ready-made images
 
-Tested against:
+Tested on real hardware, two machines:
 
-| | |
-|---|---|
-| pwnagotchi | **2.9.5.3** (real hardware) and the `jayofelony` **`noai`** branch (source-verified) |
-| Screen | Waveshare 2.13" v2 (`ui.display.type = "waveshare_2"`) |
-| Board | Raspberry Pi Zero W, Raspbian bookworm |
+| Board | pwnagotchi | Arch | Display |
+|---|---|---|---|
+| Raspberry Pi Zero W | 2.9.5.3 | armv6l (32-bit) | `waveshare_2` |
+| 64-bit Raspberry Pi | 2.9.5.4 | aarch64 | `waveshare_4`, rotated 180° |
 
-Other screens should work — the layout adapts, see *Compatibility* below.
+Other screens should work — the layout adapts to whatever the driver reports.
+See *Compatibility* below for the geometries verified in simulation.
 
 Nothing else is needed: no extra Python package, no internet access on the pi.
 The plugin only uses what pwnagotchi already ships (Pillow, gettext).
