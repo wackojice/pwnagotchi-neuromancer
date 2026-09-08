@@ -8,11 +8,11 @@ A theme for [pwnagotchi](https://pwnagotchi.ai/): the ASCII face is replaced by
 a cyberpunk pixel-art portrait, the status lines speak William Gibson's
 language, and an **ICE BROKEN** screen fires on every captured handshake.
 
-<img src="docs/photos/scanning.jpg" width="620" alt="Case on a Waveshare 2.13 inch display">
+<img src="docs/photos/book.jpg" width="620" alt="A pwnagotchi running the theme, resting on a copy of Neuromancer">
 
-| Deauthenticating a client | Booting up |
-|---|---|
-| ![Flatlining](docs/photos/deauth.jpg) | ![No more mister nice deck](docs/photos/booting.jpg) |
+| Scanning | Deauthenticating | Booting up |
+|---|---|---|
+| ![Scanning the grid](docs/photos/scanning.jpg) | ![Flatlining](docs/photos/deauth.jpg) | ![No more mister nice deck](docs/photos/booting.jpg) |
 
 ## What it does
 
