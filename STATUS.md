@@ -1,12 +1,14 @@
 # Project status
 
-Updated **2026-09-06**.
+Updated **2026-09-09**.
 
 ## In one line
 
 Complete and validated on **two different machines**: a 32-bit Pi Zero W running
 2.9.5.3 with a `waveshare_2` panel, and a 64-bit board running 2.9.5.4 with a
 `waveshare_4` panel mounted upside down. Same plugin, unchanged, on both.
+Eleven faces now cover **every state pwnagotchi defines**, so nothing falls
+back to a default expression.
 
 ## Done
 
@@ -28,6 +30,15 @@ Complete and validated on **two different machines**: a 32-bit Pi Zero W running
 - [x] Config backed up on every path, previous language recorded
 - [x] `uninstall.sh` — install → uninstall → reinstall cycle verified on the
       real SD card, including the language-restore path
+- [x] **All 25 states mapped** — `bored` (flatlined visor), `angry` (mouth wide
+      open) and the three `upload` stages joined the set in v3.7.0. `happy` and
+      `sleep` were redrawn to match
+- [x] A grammar the faces follow: the **visor carries the machine's state**, the
+      **mouth carries the mood**, and each face changes one of the two
+- [x] Locale audited against the versions actually installed, not just the
+      reference: **69/69 strings on 2.9.5.3**, **104/104 on 2.9.5.4**. One line
+      showed in English because 2.9.5.3 spells it `WiFi` where 2.9.5.9 spells it
+      `Wi-Fi`, and gettext matches byte for byte
 
 ## Open
 
@@ -36,8 +47,6 @@ Complete and validated on **two different machines**: a 32-bit Pi Zero W running
       hardware-tested on two machines, but that is not proof
 - [ ] Layout tests on simulated geometries — the only tests that stand in for
       hardware nobody owns
-- [ ] Unmapped states: `ANGRY`, `BROKEN` and `UPLOAD` fall back to `awake`.
-      The recipe is known: solid black visor with a white motif knocked out
 - [ ] Random variants: pwnagotchi accepts several images per state and picks one
       at random — two or three `awake` variants would make Case less static
 - [ ] Screens never dressed up: startup, session summary, manual mode
