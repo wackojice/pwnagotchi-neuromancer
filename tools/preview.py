@@ -63,6 +63,11 @@ REPLIQUES = {
     'look_r': "Associating to {what}",
     'sleep':  "I dreamed of electric sheep",
     'ice':    "Cool, we got {num} new handshake{plural}!",
+    'angry':  "Leave me alone ...",
+    'bored':  "I'm bored ...",
+    'upload':  "Uploading data to {to} ...",
+    'upload1': "Uploading data to {to} ...",
+    'upload2': "Uploading data to {to} ...",
 }
 
 
@@ -81,7 +86,8 @@ def statut(etat, _):
     """Render this state's line, placeholders filled in."""
     brut = _(REPLIQUES.get(etat, "Sniff. Deauth. Repeat."))
     return brut.format(what='LINKSYS_5G', num=3, plural='s',
-                       secs=30, name='pwny42', mac='AA:BB:CC')
+                       secs=30, name='pwny42', mac='AA:BB:CC',
+                       to='wpa-sec')
 
 
 def charger_polices():

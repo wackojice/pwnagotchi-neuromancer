@@ -67,7 +67,7 @@ msgid "Read {lines_so_far} log lines so far ..."
 msgstr "{lines_so_far} lines of memory..."
 
 msgid "I'm bored ..."
-msgstr "Static. Nothing but static."
+msgstr "NULL SIGNAL."
 
 msgid "Let's go for a walk!"
 msgstr "Let's hit the Sprawl."

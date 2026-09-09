@@ -14,13 +14,13 @@ language, and an **ICE BROKEN** screen fires on every captured handshake.
 |---|---|
 | ![Scanning the grid](docs/photos/scanning.jpg) | ![Flatlining](docs/photos/deauth.jpg) |
 
-Two of the six faces, and two of the 104 lines. The rest turn up as your
+Two of the eleven faces, and two of the 104 lines. The rest turn up as your
 pwnagotchi lives its day — including the **ICE BROKEN** screen, which you will
 meet the first time it breaks a handshake.
 
 ## What it does
 
-- replaces the 19 ASCII faces with 5 one-bit pixel-art portraits
+- replaces all 25 ASCII faces with 11 one-bit pixel-art portraits
 - rewrites all 104 pwnagotchi lines into the Neuromancer universe
 - shows a dedicated screen for a few seconds after each handshake, with the
   target SSID
@@ -205,6 +205,13 @@ Some setups do this on **every** boot, not just the first — one device tested
 here had been doing so for months before the theme was ever installed. As long
 as the second run works, it is a pwnagotchi habit rather than a theme problem.
 
+You may also see the green LED blinking **two flashes, repeatedly**, with
+nothing on the screen. That code means the bootloader cannot read the SD card
+yet. It is worth waiting: on a Pi Zero W it has been seen blinking for a long
+while and then booting normally. If it never gets past it, reseat the card —
+the Zero's slot is a plain slide-in with no click, and it is easy to leave one
+three-quarters of the way in.
+
 ### Checking it works
 
 ```bash
@@ -327,13 +334,26 @@ Turn it off with `DECK_TEMPERATURE = False`.
 
 | File | State | Mapped from |
 |---|---|---|
-| `awake.png` | neutral, visor lit | `AWAKE`, `COOL`, `INTENSE`, `SMART`, `MOTIVATED` |
-| `happy.png` | smiling eyes in the visor | `HAPPY`, `GRATEFUL`, `EXCITED`, `FRIEND` |
+| `awake.png` | neutral, visor lit, cigarette | `AWAKE`, `COOL`, `INTENSE`, `SMART`, `MOTIVATED`, `DEBUG` |
+| `happy.png` | half-smile, cigarette | `HAPPY`, `GRATEFUL`, `EXCITED`, `FRIEND` |
 | `look_l.png` / `look_r.png` | glancing sideways | `LOOK_L`, `LOOK_R` and their *happy* variants |
-| `sleep.png` | visor dark, `zZz` | `SLEEP`, `SLEEP2`, `BORED`, `LONELY`, `SAD`, `DEMOTIVATED` |
+| `sleep.png` | dark lenses, a `Z` in each, mouth ajar, cigarette gone | `SLEEP`, `SLEEP2` |
+| `bored.png` | visor flatlined | `BORED`, `SAD`, `LONELY`, `DEMOTIVATED` |
+| `angry.png` | mouth wide open, still holding the cigarette | `ANGRY`, `BROKEN` |
+| `upload.png` / `upload1.png` / `upload2.png` | a progress bar filling up | `UPLOAD`, `UPLOAD1`, `UPLOAD2` |
 | `ice.png` | shattered ice | shown after a handshake |
 
-All images are 76-77 × 80, **pure 1-bit**, no antialiasing.
+All images are 76-77 × 80, **pure 1-bit**, no antialiasing. Every state
+pwnagotchi defines is covered, so nothing falls back to a default face.
+
+The face reads on two axes, which is what makes the states tell apart at a
+glance on e-ink: **the visor carries the machine's state** (lit, dark, flatlined,
+transferring) and **the mouth carries the mood** (neutral, smiling, shouting,
+asleep). Each image changes one of the two, rarely both.
+
+The three `upload` images are not an animation the plugin plays: pwnagotchi
+cycles through its three upload states on its own, and the bar advances because
+the state changed.
 
 `MAPPING` at the top of the plugin can be rearranged freely: several states may
 point at the same image, and `awake.png` is the fallback for anything unmapped.
@@ -403,15 +423,24 @@ faithful render (`sudo pacman -S ttf-dejavu` on Arch, `fonts-dejavu` on Debian)
 
 ## Drawing your own faces
 
-Two principles, learned the hard way:
+Three principles, learned the hard way:
 
 - **Solid fills, not thin strokes.** A 1 px outline vanishes or shimmers on
   e-ink; a black mass always survives.
 - **No vector primitives.** A mouth drawn as an arc, or text set in a font,
   clashes with pixel art. Draw by hand, at final size.
+- **No writing inside the visor.** It is about 50 px wide once scaled down, so
+  a word set there survives as three or four grey dots and nothing more. Two
+  labels were drawn and thrown away before this sank in. Put the words in the
+  voice instead, where they render large next to the face — `NULL SIGNAL.`
+  started life inside the visor and reads far better as a line.
 
-`sleep.png` shows the pattern that works best: the visor as a solid black block
-with the motif knocked out in white. `happy.png` reuses it with smiling eyes.
+There are two patterns to reuse, matching the two axes described above.
+**Machine state**: the visor as a solid black block with the motif knocked out
+in white — `sleep.png`, `bored.png` and the `upload` set all work this way, and
+the block is what makes them readable across a room. **Mood**: leave the visor
+lit and redraw the mouth only, as `happy.png` and `angry.png` do. Changing both
+at once makes it look like a different character.
 
 ## Licence
 

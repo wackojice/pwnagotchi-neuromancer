@@ -47,7 +47,7 @@ def _trace(message):
 
 class Neuromancer(plugins.Plugin):
     __author__ = 'wackojice'
-    __version__ = '3.6.0'
+    __version__ = '3.7.0'
     __license__ = 'GPL3'
     __description__ = 'Neuromancer faces and voice, ICE BROKEN screen, adaptive layout'
 
@@ -91,10 +91,18 @@ class Neuromancer(plugins.Plugin):
         faces.GRATEFUL: 'happy',
         faces.EXCITED: 'happy',
         faces.FRIEND: 'happy',
-        faces.BORED: 'sleep',
-        faces.LONELY: 'sleep',
-        faces.SAD: 'sleep',
-        faces.DEMOTIVATED: 'sleep',
+        faces.BORED: 'bored',
+        faces.LONELY: 'bored',
+        faces.SAD: 'bored',
+        faces.DEMOTIVATED: 'bored',
+        faces.ANGRY: 'angry',
+        faces.BROKEN: 'angry',
+        faces.DEBUG: 'awake',   # on_custom(): any plugin message, not a fault
+        # the core cycles through these three while uploading, which animates
+        # the progress bar on its own
+        faces.UPLOAD: 'upload',
+        faces.UPLOAD1: 'upload1',
+        faces.UPLOAD2: 'upload2',
     }
 
     def __init__(self):
