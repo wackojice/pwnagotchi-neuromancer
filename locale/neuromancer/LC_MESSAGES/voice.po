@@ -216,6 +216,12 @@ msgstr "Wake up, {what}."
 msgid "Just decided that {mac} needs no Wi-Fi!"
 msgstr "{mac} is cut from the grid."
 
+# 2.9.5.3 spells it "WiFi", 2.9.5.9 "Wi-Fi": one hyphen apart, and gettext
+# matches byte for byte, so both spellings need an entry or the older
+# release falls back to English
+msgid "Just decided that {mac} needs no WiFi!"
+msgstr "{mac} is cut from the grid."
+
 msgid "Deauthenticating {mac}"
 msgstr "Flatlining {mac}"
 
