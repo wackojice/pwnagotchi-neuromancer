@@ -148,6 +148,10 @@ def composer(etat, polices, _, ssid='LINKSYS_5G'):
     texte = statut(etat, _)
     # the plugin trims to two lines and marks the cut, because a third would
     # be drawn over the deck reading -- mirror it or this preview would lie
+    # flatten newlines first: some plugins embed them in the status, and the
+    # Text element joins the wrapper output with newlines of its own, so an
+    # embedded one draws a line that counting the list never sees
+    texte = ' '.join(texte.split())
     lignes = TextWrapper(width=MAX_STATUS, replace_whitespace=False).wrap(texte)
     if len(lignes) > 2:
         lignes = lignes[:2]

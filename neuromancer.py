@@ -48,7 +48,7 @@ def _trace(message):
 
 class Neuromancer(plugins.Plugin):
     __author__ = 'wackojice'
-    __version__ = '3.7.3'
+    __version__ = '3.7.4'
     __license__ = 'GPL3'
     __description__ = 'Neuromancer faces and voice, ICE BROKEN screen, adaptive layout'
 
@@ -358,7 +358,14 @@ class Neuromancer(plugins.Plugin):
         The deck reading sits at a fixed height, right where a third line
         would be drawn: long statuses used to overprint it. Cut on a word
         boundary so a MAC address is never sliced in half.
+
+        Newlines are flattened first. Some plugins put their own into the
+        status -- bt-tether sends "BT Conn. down\nBT dev disconn." -- and the
+        Text element joins the wrapper's output with newlines of its own, so
+        an embedded one yields a line we never counted. Two entries in the
+        list, three lines on the glass, and the third lands on the deck.
         """
+        text = ' '.join(text.split())
         lines = self.wrapper.wrap(text)
         if len(lines) <= self.MAX_LINES:
             return text
