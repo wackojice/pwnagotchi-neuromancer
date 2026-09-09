@@ -21,6 +21,25 @@ import re
 import sys
 
 
+def dedupe(body, key):
+    """Drop repeated `key = ...` lines from a section body, keeping the first.
+
+    Earlier versions of this script appended a second copy every time the
+    installer ran over an already-configured file, which makes the TOML
+    invalid ("Cannot overwrite a value") and stops pwnagotchi reading it.
+    Repair those files rather than only avoiding new ones.
+    """
+    seen = False
+    out = []
+    for line in body.split('\n'):
+        if re.match(r'^\s*%s\s*=' % key, line):
+            if seen:
+                continue
+            seen = True
+        out.append(line)
+    return '\n'.join(out)
+
+
 def uses_sections(text):
     return not re.search(r'^main\.[a-z]', text, re.M)
 
@@ -40,11 +59,15 @@ def read_lang(text):
 def set_lang(text, value):
     if uses_sections(text):
         def repl(match):
-            body = re.sub(r'^(\s*lang\s*=\s*)"[^"]*"',
-                          r'\g<1>"%s"' % value, match.group(1), count=1, flags=re.M)
-            if body == match.group(1):            # no lang key yet
+            # count the substitutions rather than compare the text: rewriting a
+            # key to the value it already holds changes nothing, and comparing
+            # would read that as "key absent" and append a duplicate
+            body, n = re.subn(r'^(\s*lang\s*=\s*)"[^"]*"',
+                              r'\g<1>"%s"' % value, match.group(1), count=1,
+                              flags=re.M)
+            if not n:                             # no lang key yet
                 body = '\nlang = "%s"' % value + body
-            return '[main]' + body
+            return '[main]' + dedupe(body, 'lang')
         new, n = re.subn(r'^\[main\]\s*$(.*?)(?=^\[|\Z)', repl, text, count=1,
                          flags=re.M | re.S)
         if n:
@@ -63,12 +86,14 @@ def set_plugin(text, enabled):
         section = re.search(r'^\[main\.plugins\.neuromancer\]\s*$(.*?)(?=^\[|\Z)',
                             text, re.M | re.S)
         if section:
-            body = re.sub(r'^(\s*enabled\s*=\s*).*$', r'\g<1>%s' % flag,
-                          section.group(1), count=1, flags=re.M)
-            if body == section.group(1):
+            # same trap as in set_lang: re-enabling an already enabled plugin
+            # leaves the text untouched, which must not be read as "key absent"
+            body, n = re.subn(r'^(\s*enabled\s*=\s*).*$', r'\g<1>%s' % flag,
+                              section.group(1), count=1, flags=re.M)
+            if not n:
                 body = '\nenabled = %s' % flag + body
             return text.replace(section.group(0),
-                                '[main.plugins.neuromancer]' + body, 1)
+                                '[main.plugins.neuromancer]' + dedupe(body, 'enabled'), 1)
         return text.rstrip() + '\n\n[main.plugins.neuromancer]\nenabled = %s\n' % flag
 
     if re.search(r'^\s*main\.plugins\.neuromancer\.enabled\s*=', text, re.M):
