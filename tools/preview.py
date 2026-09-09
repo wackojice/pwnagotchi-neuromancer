@@ -146,9 +146,17 @@ def composer(etat, polices, _, ssid='LINKSYS_5G'):
     d.text((COL_D, 16), DEMO['name'], font=polices['bold'], fill=0)
     # pwnagotchi wraps the status with TextWrapper(width=20)
     texte = statut(etat, _)
+    # the plugin trims to two lines and marks the cut, because a third would
+    # be drawn over the deck reading -- mirror it or this preview would lie
     lignes = TextWrapper(width=MAX_STATUS, replace_whitespace=False).wrap(texte)
+    if len(lignes) > 2:
+        lignes = lignes[:2]
+        mots = lignes[-1].split()
+        while mots and len(' '.join(mots)) + 1 > MAX_STATUS:
+            mots.pop()
+        lignes[-1] = (' '.join(mots) + '\u2026') if mots else '\u2026'
     y = 34
-    for ligne in lignes[:2]:
+    for ligne in lignes:
         d.text((COL_D, y), ligne, font=polices['medium'], fill=0)
         y += 12
 

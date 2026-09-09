@@ -3,6 +3,7 @@ import time
 import logging
 import threading
 from collections import deque
+from textwrap import TextWrapper
 
 from PIL import Image
 
@@ -47,7 +48,7 @@ def _trace(message):
 
 class Neuromancer(plugins.Plugin):
     __author__ = 'wackojice'
-    __version__ = '3.7.0'
+    __version__ = '3.7.1'
     __license__ = 'GPL3'
     __description__ = 'Neuromancer faces and voice, ICE BROKEN screen, adaptive layout'
 
@@ -56,6 +57,7 @@ class Neuromancer(plugins.Plugin):
     LINE_SECONDS = 6        # minimum seconds a line stays readable
     LINE_WIDTH = 20         # characters per line before wrapping
     QUEUE_MAX = 3           # lines held in the queue at most
+    MAX_LINES = 2           # a third line would land on top of the deck reading
 
     # Status-bar labels rewritten into Gibson's vocabulary.
     # Each entry: element -> (label, x or None, spacing or None)
@@ -120,6 +122,8 @@ class Neuromancer(plugins.Plugin):
         self.deck = ''          # last temperature read
         self.deck_until = 0     # instant of the next reading
         self.queue = deque(maxlen=self.QUEUE_MAX)  # lines waiting their turn
+        # same settings as the Text element, so we count the lines it will draw
+        self.wrapper = TextWrapper(width=self.LINE_WIDTH, replace_whitespace=False)
 
     # ---------------------------------------------------------------- chargement
 
@@ -344,9 +348,26 @@ class Neuromancer(plugins.Plugin):
         if time.time() < self.line_until or not self.queue:
             return
 
-        self.line = self.queue.popleft()
+        self.line = self._fit(self.queue.popleft())
         self.line_until = time.time() + self.LINE_SECONDS
         ui.set('nm_line', self.line)
+
+    def _fit(self, text):
+        """Trim a line to MAX_LINES.
+
+        The deck reading sits at a fixed height, right where a third line
+        would be drawn: long statuses used to overprint it. Cut on a word
+        boundary so a MAC address is never sliced in half.
+        """
+        lines = self.wrapper.wrap(text)
+        if len(lines) <= self.MAX_LINES:
+            return text
+        kept = lines[:self.MAX_LINES]
+        words = kept[-1].split()
+        while words and len(' '.join(words)) + 1 > self.LINE_WIDTH:
+            words.pop()
+        kept[-1] = (' '.join(words) + '\u2026') if words else '\u2026'
+        return ' '.join(kept)
 
     def on_handshake(self, agent, filename, access_point, client_station):
         if 'ice' not in self.images:
