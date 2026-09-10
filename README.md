@@ -373,6 +373,7 @@ At the top of `neuromancer.py`:
 | `FOLDER` | where the PNGs live |
 | `PWN_SECONDS` | seconds the ICE BROKEN screen stays up (default: 8) |
 | `SMILE_SECONDS` | seconds `happy.png` is held right after it (default: 4) |
+| `LABELS` | status-bar labels, as `name: (text, x, spacing)` |
 | `LINE_SECONDS` | minimum seconds a line stays readable (default: 6) |
 | `LINE_WIDTH` | characters per line before wrapping |
 | `QUEUE_MAX` | lines held in the queue (default: 3) |

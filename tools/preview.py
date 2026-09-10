@@ -164,11 +164,11 @@ def composer(etat, polices, _, ssid='LINKSYS_5G'):
         d.text((COL_D, y), ligne, font=polices['medium'], fill=0)
         y += 12
 
-    # lines added by the plugin, filled only in ice mode
-    d.text((COL_D, 62), DEMO['deck'], font=polices['medium'], fill=0)
+    # lines added by the plugin: ICE BROKEN in the middle, deck reading last
     if etat == 'ice':
-        d.text((COL_D, 78), 'ICE BROKEN', font=polices['bold'], fill=0)
-        d.text((COL_D, 94), ssid[:16], font=polices['medium'], fill=0)
+        d.text((COL_D, 62), 'ICE BROKEN', font=polices['bold'], fill=0)
+        d.text((COL_D, 78), ssid[:16], font=polices['medium'], fill=0)
+    d.text((COL_D, 94), DEMO['deck'], font=polices['medium'], fill=0)
 
     return ecran
 
