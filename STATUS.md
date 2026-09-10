@@ -1,14 +1,14 @@
 # Project status
 
-Updated **2026-09-09**.
+Updated **2026-09-10**.
 
 ## In one line
 
-Complete and validated on **two different machines**: a 32-bit Pi Zero W running
-2.9.5.3 with a `waveshare_2` panel, and a 64-bit board running 2.9.5.4 with a
-`waveshare_4` panel mounted upside down. Same plugin, unchanged, on both.
-Eleven faces now cover **every state pwnagotchi defines**, so nothing falls
-back to a default expression.
+Complete and validated on **three setups**, spanning the oldest release these
+boards can run and the newest one there is: a 32-bit Pi Zero W on 2.9.5.3, a
+64-bit board on 2.9.5.4, and a clean install of **2.9.5.8** (Debian 13,
+Python 3.13). Same plugin, unchanged, on all three. Eleven faces cover **every
+state pwnagotchi defines**, so nothing falls back to a default expression.
 
 ## Done
 
@@ -39,6 +39,17 @@ back to a default expression.
       reference: **69/69 strings on 2.9.5.3**, **104/104 on 2.9.5.4**. One line
       showed in English because 2.9.5.3 spells it `WiFi` where 2.9.5.9 spells it
       `Wi-Fi`, and gettext matches byte for byte
+- [x] **Clean install of 2.9.5.8 from scratch**: flashed, configured and themed
+      from the SD card alone, without a data cable. That release moves the venv
+      to `/opt/.pwn`, reads plugins from `/etc/pwnagotchi/custom-plugins/`, and
+      rejects a device name containing an underscore
+- [x] Installers read `custom_plugins` from the config in **both** TOML layouts.
+      Reading only the flat form put the plugin in a directory recent releases
+      never scan -- the install reported success and the theme silently never
+      loaded
+- [x] `happy` made visible: the core sets it on a handshake, exactly when the
+      ice screen covers the face, so the grin was drawn where nothing could
+      show it. It now holds for `SMILE_SECONDS` after the ice clears
 
 ## Open
 
