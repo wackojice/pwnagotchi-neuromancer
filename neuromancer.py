@@ -48,7 +48,7 @@ def _trace(message):
 
 class Neuromancer(plugins.Plugin):
     __author__ = 'wackojice'
-    __version__ = '3.9.0'
+    __version__ = '3.9.1'
     __license__ = 'GPL3'
     __description__ = 'Neuromancer faces and voice, ICE BROKEN screen, adaptive layout'
 
@@ -256,19 +256,16 @@ class Neuromancer(plugins.Plugin):
             color=0, font=fonts.Medium,
             wrap=True, max_length=self.LINE_WIDTH))
 
-        # ICE BROKEN and its target take the middle of the column; the deck
-        # reading sits last, just above the bottom rule, where it reads as a
-        # standing gauge rather than a line lost among the others
+        ui.add_element('nm_deck', Text(
+            value='', position=(self.col_r, self.top + 46),
+            color=0, font=fonts.Medium))
+
         ui.add_element('nm_status', LabeledValue(
-            color=0, label='', value='', position=(self.col_r, self.top + 46),
-            label_font=fonts.Bold, text_font=fonts.Medium))
-        ui.add_element('nm_target', LabeledValue(
             color=0, label='', value='', position=(self.col_r, self.top + 62),
             label_font=fonts.Bold, text_font=fonts.Medium))
-
-        ui.add_element('nm_deck', Text(
-            value='', position=(self.col_r, self.top + 78),
-            color=0, font=fonts.Medium))
+        ui.add_element('nm_target', LabeledValue(
+            color=0, label='', value='', position=(self.col_r, self.top + 78),
+            label_font=fonts.Bold, text_font=fonts.Medium))
 
     def _rename_labels(self, ui):
         """Switch the status bar to Gibson's vocabulary.
@@ -362,7 +359,7 @@ class Neuromancer(plugins.Plugin):
     def _fit(self, text):
         """Trim a line to MAX_LINES.
 
-        The next element sits at a fixed height, right where a third line
+        The deck reading sits at a fixed height, right where a third line
         would be drawn: long statuses used to overprint it. Cut on a word
         boundary so a MAC address is never sliced in half.
 
