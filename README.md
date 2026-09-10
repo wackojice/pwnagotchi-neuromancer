@@ -40,12 +40,14 @@ yet, start there:
 - [jayofelony/pwnagotchi](https://github.com/jayofelony/pwnagotchi) — the
   actively maintained fork, with ready-made images
 
-Tested on real hardware, two machines:
+Tested on real hardware, three setups — from the oldest release these boards
+can run to the newest there is:
 
 | Board | pwnagotchi | Arch | Display |
 |---|---|---|---|
 | Raspberry Pi Zero W | 2.9.5.3 | armv6l (32-bit) | `waveshare_2` |
 | 64-bit Raspberry Pi | 2.9.5.4 | aarch64 | `waveshare_4`, rotated 180° |
+| 64-bit Raspberry Pi | **2.9.5.8** | aarch64 | `waveshare_4`, rotated 180° |
 
 Other screens should work — the layout adapts to whatever the driver reports.
 See *Compatibility* below for the geometries verified in simulation.
