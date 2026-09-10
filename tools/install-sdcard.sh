@@ -46,10 +46,15 @@ cp "$SOURCE"/images/*.png "$DEST_IMG/"
 # /usr/local/share/pwnagotchi/custom-plugins/ on 2.x and
 # /etc/pwnagotchi/custom-plugins/ on recent forks. Read it rather than guess:
 # the user config first, then the shipped defaults.
-PLUGIN_PATH="$(grep -hoP '^\s*main\.custom_plugins\s*=\s*"\K[^"]+' "$CONFIG" 2>/dev/null | head -1 || true)"
+# configure.py reads both layouts; a grep for the flat form alone quietly
+# installed the plugin into the wrong directory on releases whose defaults
+# are written as sections, and pwnagotchi then never loaded it
+PLUGIN_PATH="$(python3 "$SOURCE/tools/configure.py" "$CONFIG" plugins-dir 2>/dev/null || true)"
 if [[ -z "$PLUGIN_PATH" ]]; then
     DEFAULTS="$(find "$SD_ROOT" -maxdepth 9 -name 'defaults.toml' -path '*pwnagotchi*' 2>/dev/null | head -1 || true)"
-    PLUGIN_PATH="$(grep -hoP '^\s*main\.custom_plugins\s*=\s*"\K[^"]+' "$DEFAULTS" 2>/dev/null | head -1 || true)"
+    if [[ -n "$DEFAULTS" ]]; then
+        PLUGIN_PATH="$(python3 "$SOURCE/tools/configure.py" "$DEFAULTS" plugins-dir 2>/dev/null || true)"
+    fi
 fi
 PLUGIN_PATH="${PLUGIN_PATH:-/usr/local/share/pwnagotchi/custom-plugins/}"
 DEST_PLUG="$SD_ROOT/${PLUGIN_PATH#/}"

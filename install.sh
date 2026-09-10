@@ -31,10 +31,13 @@ echo "==> Images -> $IMAGES_DIR"
 mkdir -p "$IMAGES_DIR"
 cp "$SOURCE"/images/*.png "$IMAGES_DIR/"
 
-PLUGINS_DIR="$(grep -hoP '^\s*main\.custom_plugins\s*=\s*"\K[^"]+' "$CONFIG" 2>/dev/null | head -1 || true)"
+# read via configure.py: it understands both the flat and the section layout
+PLUGINS_DIR="$(python3 "$SOURCE/tools/configure.py" "$CONFIG" plugins-dir 2>/dev/null || true)"
 if [[ -z "$PLUGINS_DIR" ]]; then
     DEFAULTS="$(find / -maxdepth 9 -name 'defaults.toml' -path '*pwnagotchi*' -not -path '*/proc/*' 2>/dev/null | head -1 || true)"
-    PLUGINS_DIR="$(grep -hoP '^\s*main\.custom_plugins\s*=\s*"\K[^"]+' "$DEFAULTS" 2>/dev/null | head -1 || true)"
+    if [[ -n "$DEFAULTS" ]]; then
+        PLUGINS_DIR="$(python3 "$SOURCE/tools/configure.py" "$DEFAULTS" plugins-dir 2>/dev/null || true)"
+    fi
 fi
 PLUGINS_DIR="${PLUGINS_DIR:-/usr/local/share/pwnagotchi/custom-plugins/}"
 

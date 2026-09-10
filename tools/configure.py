@@ -21,6 +21,24 @@ import re
 import sys
 
 
+def read_plugins_dir(text):
+    """Where this config says custom plugins live, in either layout.
+
+    Flat files spell it `main.custom_plugins = "..."`; section files put a
+    bare `custom_plugins` under [main]. Reading only the flat form silently
+    installed the plugin into the wrong directory on releases that ship the
+    section form, and pwnagotchi never loaded it.
+    """
+    if uses_sections(text):
+        main = re.search(r'^\[main\]\s*$(.*?)(?=^\[|\Z)', text, re.M | re.S)
+        if main:
+            m = re.search(r'^\s*custom_plugins\s*=\s*"([^"]+)"', main.group(1), re.M)
+            return m.group(1) if m else None
+        return None
+    m = re.search(r'^\s*main\.custom_plugins\s*=\s*"([^"]+)"', text, re.M)
+    return m.group(1) if m else None
+
+
 def dedupe(body, key):
     """Drop repeated `key = ...` lines from a section body, keeping the first.
 
@@ -104,10 +122,17 @@ def set_plugin(text, enabled):
 
 
 def main():
-    if len(sys.argv) not in (3, 4) or sys.argv[2] not in ('enable', 'disable'):
-        sys.exit('usage: configure.py <config.toml> enable|disable [restore-lang]')
+    if len(sys.argv) not in (3, 4) or sys.argv[2] not in ('enable', 'disable',
+                                                         'plugins-dir'):
+        sys.exit('usage: configure.py <config.toml> enable|disable|plugins-dir '
+                 '[restore-lang]')
     path, action = sys.argv[1], sys.argv[2]
     text = open(path, encoding='utf-8').read()
+
+    if action == 'plugins-dir':
+        print(read_plugins_dir(text) or '')
+        return
+
     style = 'sections' if uses_sections(text) else 'flat'
     previous = read_lang(text)
 
