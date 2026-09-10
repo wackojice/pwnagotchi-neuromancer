@@ -343,6 +343,12 @@ Turn it off with `DECK_TEMPERATURE = False`.
 | `upload.png` / `upload1.png` / `upload2.png` | a progress bar filling up | `UPLOAD`, `UPLOAD1`, `UPLOAD2` |
 | `ice.png` | shattered ice | shown after a handshake |
 
+After a handshake the ice screen holds for `PWN_SECONDS`, then `happy.png`
+for `SMILE_SECONDS`, then the face follows the core again. The core does set
+`HAPPY` on a handshake — but it does so during the very seconds the ice
+screen covers, so the grin was never actually seen. Holding it just after
+puts it back: he breaks the ice, then he grins.
+
 All images are 76-77 × 80, **pure 1-bit**, no antialiasing. Every state
 pwnagotchi defines is covered, so nothing falls back to a default face.
 
@@ -365,7 +371,8 @@ At the top of `neuromancer.py`:
 | Constant | Purpose |
 |---|---|
 | `FOLDER` | where the PNGs live |
-| `PWN_SECONDS` | seconds the ICE BROKEN screen stays up |
+| `PWN_SECONDS` | seconds the ICE BROKEN screen stays up (default: 8) |
+| `SMILE_SECONDS` | seconds `happy.png` is held right after it (default: 4) |
 | `LINE_SECONDS` | minimum seconds a line stays readable (default: 6) |
 | `LINE_WIDTH` | characters per line before wrapping |
 | `QUEUE_MAX` | lines held in the queue (default: 3) |

@@ -48,12 +48,13 @@ def _trace(message):
 
 class Neuromancer(plugins.Plugin):
     __author__ = 'wackojice'
-    __version__ = '3.7.5'
+    __version__ = '3.8.0'
     __license__ = 'GPL3'
     __description__ = 'Neuromancer faces and voice, ICE BROKEN screen, adaptive layout'
 
     FOLDER = '/usr/local/share/neuromancer'
     PWN_SECONDS = 8         # seconds the ICE BROKEN screen stays up
+    SMILE_SECONDS = 4       # seconds Case grins afterwards, before letting go
     LINE_SECONDS = 6        # minimum seconds a line stays readable
     LINE_WIDTH = 20         # characters per line before wrapping
     QUEUE_MAX = 3           # lines held in the queue at most
@@ -111,6 +112,7 @@ class Neuromancer(plugins.Plugin):
         self.images = {}
         self.bitmap = None
         self.until = 0
+        self.smile_until = 0
         self.ssid = ''
         self.shown = None       # name of the image currently placed
         self.top = TOP_DEFAULT
@@ -380,7 +382,11 @@ class Neuromancer(plugins.Plugin):
         if 'ice' not in self.images:
             return
         self.ssid = (access_point or {}).get('hostname') or '???'
-        self.until = time.time() + self.PWN_SECONDS
+        now = time.time()
+        self.until = now + self.PWN_SECONDS
+        # the core sets HAPPY on a handshake, but the ice screen covers those
+        # very seconds, so the grin was never seen: hold it just after instead
+        self.smile_until = now + self.PWN_SECONDS + self.SMILE_SECONDS
         logging.info('[neuromancer] ICE BROKEN on %s' % self.ssid)
 
     def on_ui_update(self, ui):
@@ -390,8 +396,11 @@ class Neuromancer(plugins.Plugin):
         self._pace_lines(ui)
         self._show_deck(ui)
 
-        if time.time() < self.until:
+        now = time.time()
+        if now < self.until:
             wanted = 'ice'
+        elif now < self.smile_until and 'happy' in self.images:
+            wanted = 'happy'
         else:
             # read what the core just decided, and translate it
             try:
