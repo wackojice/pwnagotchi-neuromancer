@@ -5,6 +5,10 @@
 #
 #   sudo ./uninstall.sh
 #
+# Or, against an SD card mounted on another computer -- the pi powered off:
+#
+#   sudo NEUROMANCER_TEST_ROOT=/run/media/<user>/rootfs ./uninstall.sh
+#
 # Deliberately cautious: it only removes what this project installed, and only
 # restores settings it still recognises as its own. Anything you changed after
 # installing is left alone.
@@ -38,7 +42,10 @@ else
 fi
 
 echo "==> Plugin"
-PLUGIN_PATH="$(grep -oP '^\s*main\.custom_plugins\s*=\s*"\K[^"]+' "$CONFIG" 2>/dev/null | head -1 || true)"
+SOURCE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# configure.py reads both the flat and the section layout; the two known
+# directories are swept below regardless, so this is belt and braces
+PLUGIN_PATH="$(python3 "$SOURCE/tools/configure.py" "$CONFIG" plugins-dir 2>/dev/null || true)"
 [[ -n "$PLUGIN_PATH" ]] && PLUGIN_PATH="$ROOT$PLUGIN_PATH"
 REMOVED=0
 for dir in "$PLUGIN_PATH" "$ROOT/usr/local/share/pwnagotchi/custom-plugins" "$ROOT/etc/pwnagotchi/custom-plugins"; do
