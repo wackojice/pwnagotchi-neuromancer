@@ -14,13 +14,13 @@ language, and an **ICE BROKEN** screen fires on every captured handshake.
 |---|---|
 | ![Scanning the grid](docs/photos/scanning.jpg) | ![Flatlining](docs/photos/deauth.jpg) |
 
-Two of the eleven faces, and two of the 104 lines. The rest turn up as your
+Two of the fourteen faces, and two of the 104 lines. The rest turn up as your
 pwnagotchi lives its day — including the **ICE BROKEN** screen, which you will
 meet the first time it breaks a handshake.
 
 ## What it does
 
-- replaces all 25 ASCII faces with 11 one-bit pixel-art portraits
+- replaces all 25 ASCII faces with 14 one-bit pixel-art portraits
 - rewrites all 104 pwnagotchi lines into the Neuromancer universe
 - shows a dedicated screen for a few seconds after each handshake, with the
   target SSID
@@ -356,11 +356,14 @@ Turn it off with `DECK_TEMPERATURE = False`.
 
 | File | State | Mapped from |
 |---|---|---|
-| `awake.png` | neutral, visor lit, cigarette | `AWAKE`, `COOL`, `INTENSE`, `SMART`, `MOTIVATED`, `DEBUG` |
+| `awake.png` | neutral, visor lit, cigarette | `AWAKE`, `COOL`, `SMART`, `MOTIVATED`, `DEBUG` |
 | `happy.png` | half-smile, cigarette | `HAPPY`, `GRATEFUL`, `EXCITED`, `FRIEND` |
+| `intense.png` | teeth clenched | `INTENSE` — sending an association frame |
 | `look_l.png` / `look_r.png` | glancing sideways | `LOOK_L`, `LOOK_R` and their *happy* variants |
 | `sleep.png` | dark lenses, a `Z` in each, mouth ajar, cigarette gone | `SLEEP`, `SLEEP2` |
-| `bored.png` | visor flatlined | `BORED`, `SAD`, `LONELY`, `DEMOTIVATED` |
+| `bored.png` | visor flatlined | `BORED`, `DEMOTIVATED` |
+| `sad.png` | flatlined, a broken heart, mouth down | `SAD` — boredom gone on |
+| `lonely.png` | mouth down, cigarette drooping | `LONELY` |
 | `angry.png` | mouth wide open, still holding the cigarette | `ANGRY`, `BROKEN` |
 | `upload.png` / `upload1.png` / `upload2.png` | a progress bar filling up | `UPLOAD`, `UPLOAD1`, `UPLOAD2` |
 | `ice.png` | shattered ice | shown after a handshake |
@@ -382,6 +385,22 @@ asleep). Each image changes one of the two, rarely both.
 The three `upload` images are not an animation the plugin plays: pwnagotchi
 cycles through its three upload states on its own, and the bar advances because
 the state changed.
+
+### Variants
+
+Any face can have alternates: `awake.png`, then `awake_2.png`, `awake_3.png`
+and so on. One is picked at random whenever the core moves to a different
+state, so a face that carries several states stops sitting still through all
+of them — `AWAKE`, `COOL`, `SMART` and `MOTIVATED` all land on `awake`, and
+without this the screen never changed across the four.
+
+The underscore matters. `upload2.png` is a state of its own, not a second
+drawing of `upload`; only `_2` and up are read as alternates. Loading stops at
+the first gap, so `_2` and `_4` without a `_3` leaves the fourth unread.
+
+`awake_2.png` ships as an example: the same face, with the cigarette smoking.
+A good variant changes one small area and leaves the silhouette alone —
+redrawing an outline makes the head appear to jump between frames.
 
 `MAPPING` at the top of the plugin can be rearranged freely: several states may
 point at the same image, and `awake.png` is the fallback for anything unmapped.
@@ -470,7 +489,19 @@ There are two patterns to reuse, matching the two axes described above.
 in white — `sleep.png`, `bored.png` and the `upload` set all work this way, and
 the block is what makes them readable across a room. **Mood**: leave the visor
 lit and redraw the mouth only, as `happy.png` and `angry.png` do. Changing both
-at once makes it look like a different character.
+at once usually makes it look like a different character — `sad.png` is the
+one exception, and deliberately so: it is boredom gone on, so the flat trace
+stays *and* the mouth falls *and* a broken heart appears. Three signs piling
+up, because the situation got worse.
+
+Two more things, learned by throwing drawings away:
+
+- **Draw at an exact multiple of the target.** 1216 × 1280 is 16× a 76 × 80
+  face, so every 16 × 16 block becomes one pixel with nothing to interpolate.
+  Off-multiples introduce noise in areas you never touched.
+- **Never redraw the outline.** The drawings that failed were the ones where
+  the silhouette shifted — a face 4 px lower, lenses a different shape. In
+  isolation they looked fine; alternating with the original, the head jumps.
 
 ## Licence
 

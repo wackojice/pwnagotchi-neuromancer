@@ -2,6 +2,8 @@ import os
 import time
 import logging
 import threading
+import random
+
 from collections import deque
 from textwrap import TextWrapper
 
@@ -48,7 +50,7 @@ def _trace(message):
 
 class Neuromancer(plugins.Plugin):
     __author__ = 'wackojice'
-    __version__ = '3.9.1'
+    __version__ = '3.10.0'
     __license__ = 'GPL3'
     __description__ = 'Neuromancer faces and voice, ICE BROKEN screen, adaptive layout'
 
@@ -89,7 +91,7 @@ class Neuromancer(plugins.Plugin):
         faces.SLEEP2: 'sleep',
         faces.AWAKE: 'awake',
         faces.COOL: 'awake',
-        faces.INTENSE: 'awake',
+        faces.INTENSE: 'intense',   # sending an association frame: teeth clenched
         faces.SMART: 'awake',
         faces.MOTIVATED: 'awake',
         faces.HAPPY: 'happy',
@@ -97,8 +99,8 @@ class Neuromancer(plugins.Plugin):
         faces.EXCITED: 'happy',
         faces.FRIEND: 'happy',
         faces.BORED: 'bored',
-        faces.LONELY: 'bored',
-        faces.SAD: 'bored',
+        faces.LONELY: 'lonely',     # no peers around: the mouth falls, cigarette droops
+        faces.SAD: 'sad',           # bored gone on: flat trace, broken heart, mouth down
         faces.DEMOTIVATED: 'bored',
         faces.ANGRY: 'angry',
         faces.BROKEN: 'angry',
@@ -117,6 +119,8 @@ class Neuromancer(plugins.Plugin):
         self.smile_until = 0
         self.ssid = ''
         self.shown = None       # name of the image currently placed
+        self.shown_image = None # the exact variant placed, within that name
+        self.last_face = None   # the core's own face, to notice its changes
         self.top = TOP_DEFAULT
         self.col_r = COL_R_DEFAULT
         self.line = None        # line currently on screen
@@ -148,19 +152,37 @@ class Neuromancer(plugins.Plugin):
     def _load_now(self):
         names = set(self.MAPPING.values()) | {'ice', self.FALLBACK}
         for name in names:
-            path = os.path.join(self.FOLDER, name + '.png')
-            try:
-                self.images[name] = Image.open(path).convert('1')
-            except Exception as e:
-                logging.warning('[neuromancer] %s missing (%s)' % (path, e))
+            # name.png, then name_2.png, name_3.png ... as alternates. The core
+            # keeps several ASCII faces per state and picks one at random; a
+            # single drawing per state is what made this theme feel frozen.
+            # The underscore matters: upload2.png is its own state, not a
+            # second drawing of upload.
+            variants = []
+            for suffix in [''] + ['_%d' % n for n in range(2, 10)]:
+                path = os.path.join(self.FOLDER, name + suffix + '.png')
+                if not os.path.isfile(path):
+                    if suffix:
+                        break          # stop at the first gap
+                    continue
+                try:
+                    variants.append(Image.open(path).convert('1'))
+                except Exception as e:
+                    logging.warning('[neuromancer] %s unreadable (%s)' % (path, e))
+            if variants:
+                self.images[name] = variants
+            else:
+                logging.warning('[neuromancer] no %s*.png in %s' % (name, self.FOLDER))
 
         if self.FALLBACK not in self.images:
             logging.error('[neuromancer] %s.png is required, plugin inactive' % self.FALLBACK)
             self.images = {}
             return
 
-        _trace('%d images loaded (%s)'
-               % (len(self.images), ', '.join(sorted(self.images))))
+        total = sum(len(v) for v in self.images.values())
+        detail = ', '.join('%s%s' % (n, '*%d' % len(v) if len(v) > 1 else '')
+                           for n, v in sorted(self.images.items()))
+        _trace('%d images loaded across %d states (%s)'
+               % (total, len(self.images), detail))
 
     def on_loaded(self):
         self._load_images()
@@ -195,19 +217,19 @@ class Neuromancer(plugins.Plugin):
             self.top = y_top + 2
 
         # le portrait doit tenir dans la bande, et laisser la place au texte
-        ref = self.images[self.FALLBACK]
+        ref = self.images[self.FALLBACK][0]
         max_w = max(40, width // 2 - MARGIN_X)
         scale = min(avail_h / ref.height, max_w / ref.width, 1.0)
 
         if scale < 0.999:
             target = (max(1, int(ref.width * scale)), max(1, int(ref.height * scale)))
             # NEAREST: preserve the pixel art, no antialiasing
-            self.images = {name: img.resize(target, Image.NEAREST)
-                           for name, img in self.images.items()}
+            self.images = {name: [img.resize(target, Image.NEAREST) for img in variants]
+                           for name, variants in self.images.items()}
             logging.info('[neuromancer] images scaled to %dx%d' % target)
 
         if COL_R is None:
-            self.col_r = MARGIN_X + self.images[self.FALLBACK].width + GUTTER
+            self.col_r = MARGIN_X + self.images[self.FALLBACK][0].width + GUTTER
 
         _trace('layout: screen %dx%d, portrait at (%d,%d), text at x=%d'
                % (width, layout['height'], MARGIN_X, self.top, self.col_r))
@@ -401,8 +423,10 @@ class Neuromancer(plugins.Plugin):
         now = time.time()
         if now < self.until:
             wanted = 'ice'
+            current = None
         elif now < self.smile_until and 'happy' in self.images:
             wanted = 'happy'
+            current = None
         else:
             # read what the core just decided, and translate it
             try:
@@ -414,14 +438,25 @@ class Neuromancer(plugins.Plugin):
         if wanted not in self.images:
             wanted = self.FALLBACK
 
-        # an e-ink refresh costs ~2 s: only repaint on a real change
-        if wanted == self.shown:
+        # Draw again when the name changes, and also when the core moved to a
+        # different face that maps here anyway -- AWAKE, COOL, INTENSE and
+        # MOTIVATED all land on 'awake', and without this the screen would sit
+        # still through all of them. That is the moment to pick another variant.
+        moved = wanted != self.shown or current != self.last_face
+        self.last_face = current
+        if not moved:
+            return
+
+        pick = random.choice(self.images[wanted])
+        # an e-ink refresh costs ~2 s: skip it when the drawing is unchanged
+        if pick is self.shown_image and wanted == self.shown:
             return
         if self.shown is None:
             _trace('first render: image %s' % wanted)
         self.shown = wanted
+        self.shown_image = pick
 
-        self.bitmap.image = self.images[wanted]
+        self.bitmap.image = pick
         if wanted == 'ice':
             ui.set('nm_status', 'ICE BROKEN')
             ui.set('nm_target', self.ssid[:16])
