@@ -356,15 +356,15 @@ Turn it off with `DECK_TEMPERATURE = False`.
 
 | File | State | Mapped from |
 |---|---|---|
-| `awake.png` | neutral, visor lit, cigarette | `AWAKE`, `COOL`, `SMART`, `MOTIVATED`, `DEBUG` |
+| `awake.png` | neutral, visor lit, cigarette | `AWAKE`, `COOL`, `INTENSE`, `SMART`, `MOTIVATED`, `DEBUG` |
 | `happy.png` | half-smile, cigarette | `HAPPY`, `GRATEFUL`, `EXCITED`, `FRIEND` |
-| `intense.png` | teeth clenched | `INTENSE` — sending an association frame |
 | `look_l.png` / `look_r.png` | glancing sideways | `LOOK_L`, `LOOK_R` and their *happy* variants |
 | `sleep.png` | dark lenses, a `Z` in each, mouth ajar, cigarette gone | `SLEEP`, `SLEEP2` |
 | `bored.png` | visor flatlined | `BORED`, `DEMOTIVATED` |
 | `sad.png` | flatlined, a broken heart, mouth down | `SAD` — boredom gone on |
 | `lonely.png` | mouth down, cigarette drooping | `LONELY` |
-| `angry.png` | mouth wide open, still holding the cigarette | `ANGRY`, `BROKEN` |
+| `angry.png` | mouth wide open, still holding the cigarette | `ANGRY` |
+| `broken.png` | teeth clenched | `BROKEN` — a fault, or an automatic restart |
 | `upload.png` / `upload1.png` / `upload2.png` | a progress bar filling up | `UPLOAD`, `UPLOAD1`, `UPLOAD2` |
 | `ice.png` | shattered ice | shown after a handshake |
 
