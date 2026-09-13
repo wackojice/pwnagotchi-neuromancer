@@ -50,7 +50,7 @@ def _trace(message):
 
 class Neuromancer(plugins.Plugin):
     __author__ = 'wackojice'
-    __version__ = '3.10.0'
+    __version__ = '3.10.1'
     __license__ = 'GPL3'
     __description__ = 'Neuromancer faces and voice, ICE BROKEN screen, adaptive layout'
 
@@ -269,7 +269,7 @@ class Neuromancer(plugins.Plugin):
                              xy=(MARGIN_X, self.top))
         # Bitmap reopened the file: hand it our copy, which may have been
         # scaled for this screen
-        self.bitmap.image = self.images[self.FALLBACK]
+        self.bitmap.image = self.images[self.FALLBACK][0]
         ui.add_element('nm_face', self.bitmap)
         _trace('nm_face element added')
 
