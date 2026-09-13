@@ -13,13 +13,14 @@ language, and an **ICE BROKEN** screen fires on every captured handshake.
 
 <img src="docs/photos/book.jpg" width="620" alt="A pwnagotchi running the theme, resting on a copy of Neuromancer">
 
-| Scanning | Deauthenticating |
+| Scanning | Flatlined |
 |---|---|
-| ![Scanning the grid](docs/photos/scanning.jpg) | ![Flatlining](docs/photos/deauth.jpg) |
+| ![Scanning the grid](docs/renders/scanning.png) | ![The sky is dead channel](docs/renders/sad.png) |
 
-Two of the fourteen faces, and two of the 104 lines. The rest turn up as your
-pwnagotchi lives its day — including the **ICE BROKEN** screen, which you will
-meet the first time it breaks a handshake.
+Two of the fourteen faces, and two of the 104 lines — rendered at actual size
+with `tools/preview.py`, which recomposes the screen exactly as the driver
+lays it out. The rest turn up as your pwnagotchi lives its day, including the
+**ICE BROKEN** screen you will meet the first time it breaks a handshake.
 
 ## What it does
 
