@@ -1,5 +1,8 @@
 # pwnagotchi-neuromancer
 
+[![latest release](https://img.shields.io/github/v/release/wackojice/pwnagotchi-neuromancer?label=latest&color=black)](https://github.com/wackojice/pwnagotchi-neuromancer/releases/latest)
+[![licence](https://img.shields.io/badge/licence-GPL--3.0-black)](LICENSE)
+
 > *The sky above the port was the color of television, tuned to a dead channel.*
 >
 > — William Gibson, *Neuromancer* (1984)
