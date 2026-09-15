@@ -22,6 +22,23 @@ with `tools/preview.py`, which recomposes the screen exactly as the driver
 lays it out. The rest turn up as your pwnagotchi lives its day, including the
 **ICE BROKEN** screen you will meet the first time it breaks a handshake.
 
+## Contents
+
+- [What it does](#what-it-does)
+- [Requirements](#requirements)
+- [Install](#install)
+- [Uninstall](#uninstall)
+- [The faces](#the-faces)
+- [The voice](#the-voice)
+
+Deeper, in `docs/`:
+
+- [Compatibility](docs/COMPATIBILITY.md) — screens, pwnagotchi releases, and what was tested on real hardware
+- [Configuration](docs/CONFIGURATION.md) — every setting, the status bar, the deck reading
+- [Drawing your own faces](docs/DRAWING-FACES.md) — sizes, the two axes, and what does not survive scaling
+- [How it works](docs/HOW-IT-WORKS.md) — the plugin hooks, and previewing without hardware
+- [Installing on a Raspberry Pi](docs/INSTALLATION-PI.md) — step by step, from a blank card
+
 ## What it does
 
 - replaces all 25 ASCII faces with 14 one-bit pixel-art portraits
@@ -54,7 +71,8 @@ can run to the newest there is:
 | 64-bit Raspberry Pi | **2.9.5.8** | aarch64 | `waveshare_4`, rotated 180° |
 
 Other screens should work — the layout adapts to whatever the driver reports.
-See *Compatibility* below for the geometries verified in simulation.
+See [Compatibility](docs/COMPATIBILITY.md) for the geometries verified in
+simulation.
 
 Nothing else is needed: no extra Python package, no internet access on the pi.
 The plugin only uses what pwnagotchi already ships (Pillow, gettext).
@@ -227,134 +245,7 @@ journalctl -u pwnagotchi -f | grep neuromancer
 The plugin also writes its startup steps to `neuromancer-trace.txt` on the boot
 partition, flushed to disk immediately — readable from any computer by pulling
 the card, and it survives an unclean shutdown. That file is what found the race
-condition described below.
-
-## Compatibility
-
-**The layout adapts to the detected screen.** At startup the plugin reads the
-active driver's `layout()`, finds the usable band between the two horizontal
-rules, places the portrait there and derives the text column. If the portrait
-does not fit, images are scaled with `NEAREST` — no antialiasing, so the pixel
-art survives.
-
-**Hardware-tested across three setups**, spanning the oldest release these
-boards can run and the newest one there is:
-
-| | Board | pwnagotchi | Base | Arch | Display |
-|---|---|---|---|---|---|
-| 1 | Pi Zero W | 2.9.5.3 | | armv6l (32-bit) | `waveshare_2` |
-| 2 | 64-bit Pi | 2.9.5.4 | | aarch64 | `waveshare_4`, rotated 180° |
-| 3 | 64-bit Pi | **2.9.5.8** | Debian 13, Python 3.13 | aarch64 | `waveshare_4`, rotated 180° |
-
-All three run the same plugin unchanged: the layout is derived from whatever the
-active driver reports, and the plugin is pure Python with no compiled parts, so
-architecture makes no difference.
-
-**The voice was audited against each one**, rather than against a single
-reference — `msgid` strings differ between releases, and gettext matches byte
-for byte, so one changed character drops a line back to English:
-
-| Release | Translatable strings | Covered |
-|---|---|---|
-| 2.9.5.3 | 69 | **69** |
-| 2.9.5.4 | 104 | **104** |
-| 2.9.5.8 | 104 | **104** |
-
-2.9.5.8 moves things about: the venv lives at `/opt/.pwn`, custom plugins are
-read from `/etc/pwnagotchi/custom-plugins/`, handshakes land in
-`/etc/pwnagotchi/handshakes`, and a device name may no longer contain an
-underscore. The installers read these paths from the config rather than assuming
-them, so nothing here needs adjusting by hand.
-
-The geometries below are **simulation-tested** — verified against the real
-driver layouts, but not confirmed on a physical device. Reports welcome.
-
-| Screen | Portrait | Text column |
-|---|---|---|
-| Waveshare 2.13" (250 × 122) | 76 × 80 at y=16 | x=95 |
-| Waveshare 1.54" (200 × 200) | 76 × 80 at y=16 | x=95 |
-| Waveshare 2.7" (264 × 176) | 76 × 80 at y=16 | x=95 |
-| Tri-color (212 × 104) | **scaled to 72 × 76**, y=14 | x=91 |
-
-Developed on a **Waveshare 2.13" v2** with pwnagotchi 2.9.5.3, then confirmed on
-a second device running **2.9.5.4 on 64-bit**, and on a clean install of
-**2.9.5.8** — both with a `waveshare_4` panel mounted upside down.
-
-> **Note for Pi Zero W (v1) owners:** the releases page confirms it — 2.9.5.6 is
-> the last one carrying a `32bit` image at all; 2.9.5.7 and 2.9.5.8 ship 64-bit
-> only. The maintainer has stated 32-bit is unsupported, and in practice the last
-> workable release for these boards is **2.9.5.3**, which is what device 1 above
-> runs. This theme works there, and its voice is audited against that release
-> specifically.
-
-To force coordinates, replace `None` with an integer at the top of the plugin:
-
-```python
-TOP = None    # auto: just below the top rule
-COL_R = None   # auto: right after the portrait
-```
-
-## The voice
-
-The theme installs a **complete locale** rewriting all 104 pwnagotchi lines.
-
-| pwnagotchi | Neuromancer |
-|---|---|
-| `Hi, I'm Pwnagotchi! Starting ...` | `Case online. Jacking in...` |
-| `Hack the Planet!` | `Burn the ICE.` |
-| `No more mister Wi-Fi!!` | `No more mister nice deck.` |
-| `I'm bored ...` | `Static. Nothing but static.` |
-| `I pwn therefore I am.` | `I break ICE, therefore I am.` |
-| `I dreamed of electric sheep` | `I dreamed of Wintermute` |
-| `Deauthenticating {mac}` | `Flatlining {mac}` |
-| `Cool, we got 3 new handshakes!` | `ICE BROKEN. 3 keys.` |
-| `I'm dead, Jim!` | `I flatlined.` |
-
-This is **standard gettext**: no pwnagotchi source is touched. The locale sits
-alongside the other 184 and is enabled with one line —
-
-```toml
-main.lang = "neuromancer"
-```
-
-— and disabled by going back to `main.lang = "en"`.
-
-Every line fits within 40 characters, the status field's display limit
-(20 characters per line, two lines). To edit them:
-
-```bash
-$EDITOR locale/neuromancer/LC_MESSAGES/voice.po
-msgfmt -o locale/neuromancer/LC_MESSAGES/voice.mo \
-       locale/neuromancer/LC_MESSAGES/voice.po
-```
-
-## The status bar
-
-The plugin also renames interface labels:
-
-| pwnagotchi | Neuromancer |
-|---|---|
-| `APS 9 (19)` | `NODES 9 (19)` |
-
-`PWND` stays: it is the counter the whole pwnagotchi community recognises, and
-renaming it would cost more in clarity than it gains in style. `ICE BROKEN`
-keeps its meaning on the capture screen, where context makes it obvious. `UP`
-and `CH` stay too — the uptime element already sits at `x = 185` on a 250 px
-screen, and a longer label would overflow.
-
-This renaming incidentally fixes a pwnagotchi display flaw. A `LabeledValue`
-places its value at `x + spacing + 5 × len(label)`, counting 5 px per character
-while the font is 6 px wide: the longer the label, the further its value creeps
-back over it — hence the `CH 11APS` collision in the stock layout. The plugin
-repositions the elements and widens the spacing.
-
-## Deck temperature
-
-A `DECK 44°C` line shows the SoC temperature, read from
-`/sys/class/thermal/thermal_zone0/temp` every `DECK_INTERVAL` seconds. Useful
-on a Pi Zero, and fitting for the vocabulary — a cyberdeck running hot.
-
-Turn it off with `DECK_TEMPERATURE = False`.
+condition described in [How it works](docs/HOW-IT-WORKS.md).
 
 ## The faces
 
@@ -409,103 +300,39 @@ redrawing an outline makes the head appear to jump between frames.
 `MAPPING` at the top of the plugin can be rearranged freely: several states may
 point at the same image, and `awake.png` is the fallback for anything unmapped.
 
-## Settings
+## The voice
 
-At the top of `neuromancer.py`:
+The theme installs a **complete locale** rewriting all 104 pwnagotchi lines.
 
-| Constant | Purpose |
+| pwnagotchi | Neuromancer |
 |---|---|
-| `FOLDER` | where the PNGs live |
-| `PWN_SECONDS` | seconds the ICE BROKEN screen stays up (default: 8) |
-| `SMILE_SECONDS` | seconds `happy.png` is held right after it (default: 4) |
-| `LABELS` | status-bar labels, as `name: (text, x, spacing)` |
-| `LINE_SECONDS` | minimum seconds a line stays readable (default: 6) |
-| `LINE_WIDTH` | characters per line before wrapping |
-| `QUEUE_MAX` | lines held in the queue (default: 3) |
-| `FALLBACK` | fallback image |
-| `TOP` / `COL_R` | portrait and text column — `None` means auto |
-| `MARGIN_X` / `GUTTER` | left margin and gap between portrait and text |
-| `LABELS` | status-bar labels to rewrite, with position and spacing |
-| `DECK_TEMPERATURE` | show the SoC temperature |
-| `DECK_INTERVAL` | seconds between temperature readings |
+| `Hi, I'm Pwnagotchi! Starting ...` | `Case online. Jacking in...` |
+| `Hack the Planet!` | `Burn the ICE.` |
+| `No more mister Wi-Fi!!` | `No more mister nice deck.` |
+| `I'm bored ...` | `Static. Nothing but static.` |
+| `I pwn therefore I am.` | `I break ICE, therefore I am.` |
+| `I dreamed of electric sheep` | `I dreamed of Wintermute` |
+| `Deauthenticating {mac}` | `Flatlining {mac}` |
+| `Cool, we got 3 new handshakes!` | `ICE BROKEN. 3 keys.` |
+| `I'm dead, Jim!` | `I flatlined.` |
 
-## How it works
+This is **standard gettext**: no pwnagotchi source is touched. The locale sits
+alongside the other 184 and is enabled with one line —
 
-The plugin does not guess the mood: it **reads** what pwnagotchi's core just
-wrote into the `face` element and translates it to a file through `MAPPING`.
-
-The `face` element is not removed — the core keeps writing to it — it is simply
-moved outside the visible frame. `name` is pulled into the right-hand column to
-free up room for the portrait.
-
-An e-ink refresh costs about two seconds, so the plugin only repaints when the
-image actually changes, never on every `on_ui_update` call.
-
-**Lines stay readable.** pwnagotchi replaces its status on every event, and
-their lifetimes are wildly uneven: `Waiting for 40s` lasts forty seconds,
-`I'm bored...` lasts one. Sampling the status at a fixed interval would only
-ever show the slow ones. So the plugin moves `status` out of frame, watches
-every change and queues it, then advances one line per `LINE_SECONDS` seconds.
-The queue is capped at `QUEUE_MAX`: under heavy activity the oldest lines are
-dropped rather than letting the display fall behind reality.
-
-Writing back into `status` would be simpler but causes a refresh loop: each
-write marks a change, which triggers a render, which calls the plugin again. On
-e-ink at two seconds per refresh the screen would flicker endlessly. The plugin
-never touches it.
-
-**Image loading is thread-safe.** pwnagotchi runs `on_loaded` in a separate
-thread while the main thread builds the UI, so `on_ui_setup` can run *before*
-the images exist. Both call the same idempotent loader, guarded by a lock.
-This ordering was the bug that kept the portrait invisible on first install —
-found only by tracing to the boot partition on real hardware.
-
-## Preview without hardware
-
-The repo ships a tool that recomposes the 250 × 122 screen exactly like the
-`waveshare2in13_V2` layout — same coordinates, same fonts, same 1-bit mode:
-
-```bash
-./tools/preview.py                # every state, plus a contact sheet
-./tools/preview.py ice --zoom 6   # one state, enlarged
+```toml
+main.lang = "neuromancer"
 ```
 
-PNGs land in `preview/` (git-ignored). Needs Pillow, and `DejaVuSansMono` for a
-faithful render (`sudo pacman -S ttf-dejavu` on Arch, `fonts-dejavu` on Debian)
-— otherwise it falls back to another monospace font and says so.
+— and disabled by going back to `main.lang = "en"`.
 
-## Drawing your own faces
+Every line fits within 40 characters, the status field's display limit
+(20 characters per line, two lines). To edit them:
 
-Three principles, learned the hard way:
-
-- **Solid fills, not thin strokes.** A 1 px outline vanishes or shimmers on
-  e-ink; a black mass always survives.
-- **No vector primitives.** A mouth drawn as an arc, or text set in a font,
-  clashes with pixel art. Draw by hand, at final size.
-- **No writing inside the visor.** It is about 50 px wide once scaled down, so
-  a word set there survives as three or four grey dots and nothing more. Two
-  labels were drawn and thrown away before this sank in. Put the words in the
-  voice instead, where they render large next to the face — `NULL SIGNAL.`
-  started life inside the visor and reads far better as a line.
-
-There are two patterns to reuse, matching the two axes described above.
-**Machine state**: the visor as a solid black block with the motif knocked out
-in white — `sleep.png`, `bored.png` and the `upload` set all work this way, and
-the block is what makes them readable across a room. **Mood**: leave the visor
-lit and redraw the mouth only, as `happy.png` and `angry.png` do. Changing both
-at once usually makes it look like a different character — `sad.png` is the
-one exception, and deliberately so: it is boredom gone on, so the flat trace
-stays *and* the mouth falls *and* a broken heart appears. Three signs piling
-up, because the situation got worse.
-
-Two more things, learned by throwing drawings away:
-
-- **Draw at an exact multiple of the target.** 1216 × 1280 is 16× a 76 × 80
-  face, so every 16 × 16 block becomes one pixel with nothing to interpolate.
-  Off-multiples introduce noise in areas you never touched.
-- **Never redraw the outline.** The drawings that failed were the ones where
-  the silhouette shifted — a face 4 px lower, lenses a different shape. In
-  isolation they looked fine; alternating with the original, the head jumps.
+```bash
+$EDITOR locale/neuromancer/LC_MESSAGES/voice.po
+msgfmt -o locale/neuromancer/LC_MESSAGES/voice.mo \
+       locale/neuromancer/LC_MESSAGES/voice.po
+```
 
 ## Licence
 
