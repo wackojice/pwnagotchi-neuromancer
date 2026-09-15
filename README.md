@@ -30,6 +30,7 @@ lays it out. The rest turn up as your pwnagotchi lives its day, including the
 - [Uninstall](#uninstall)
 - [The faces](#the-faces)
 - [The voice](#the-voice)
+- [Credits](#credits)
 
 Deeper, in `docs/`:
 
@@ -333,6 +334,22 @@ $EDITOR locale/neuromancer/LC_MESSAGES/voice.po
 msgfmt -o locale/neuromancer/LC_MESSAGES/voice.mo \
        locale/neuromancer/LC_MESSAGES/voice.po
 ```
+
+## Credits
+
+The faces are drawn by hand, but they did not come from nowhere.
+
+The look owes a great deal to **Josan Gonzalez** and *The Future is Now* — the
+density, the hardware bolted onto people, the heavy blacks. Case wears the
+visor he wears because of that work. Go and look at the originals, they are
+far better than anything that fits on a 76 x 80 panel:
+[ixcitadel.com](https://ixcitadel.com) · [@deathburger](https://www.instagram.com/deathburger/)
+
+The words are William Gibson's, or built out of them: *Neuromancer* (1984), its
+vocabulary, and the flatline that gives half these faces their meaning.
+
+This is an homage by someone who admires both. Neither has endorsed it, neither
+is affiliated with it, and both are the reason it exists.
 
 ## Licence
 
