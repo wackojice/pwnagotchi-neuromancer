@@ -1,14 +1,15 @@
 # Project status
 
-Updated **2026-09-10**.
+Updated **2026-09-14**.
 
 ## In one line
 
 Complete and validated on **three setups**, spanning the oldest release these
 boards can run and the newest one there is: a 32-bit Pi Zero W on 2.9.5.3, a
 64-bit board on 2.9.5.4, and a clean install of **2.9.5.8** (Debian 13,
-Python 3.13). Same plugin, unchanged, on all three. Eleven faces cover **every
-state pwnagotchi defines**, so nothing falls back to a default expression.
+Python 3.13). Same plugin, unchanged, on all three. Fourteen faces cover
+**every state pwnagotchi defines**, so nothing falls back to a default
+expression, and any of them can carry random variants.
 
 ## Done
 
@@ -50,6 +51,14 @@ state pwnagotchi defines**, so nothing falls back to a default expression.
 - [x] `happy` made visible: the core sets it on a handshake, exactly when the
       ice screen covers the face, so the grin was drawn where nothing could
       show it. It now holds for `SMILE_SECONDS` after the ice clears
+- [x] **Variants**: `name_2.png`, `name_3.png` ... are loaded alongside
+      `name.png`, and one is drawn at random whenever the core changes state —
+      including when the new state maps to the same file, which is what stopped
+      `awake` sitting still through `AWAKE`, `COOL`, `SMART` and `MOTIVATED`.
+      Loading stops at the first gap; `awake_2.png` ships as the example
+- [x] Three states left the faces they shared: `sad` (flat trace, broken heart,
+      mouth down), `lonely` (mouth down, cigarette drooping) and `broken`
+      (teeth clenched). Fourteen faces now
 
 ## Open
 
@@ -58,8 +67,6 @@ state pwnagotchi defines**, so nothing falls back to a default expression.
       hardware-tested on two machines, but that is not proof
 - [ ] Layout tests on simulated geometries — the only tests that stand in for
       hardware nobody owns
-- [ ] Random variants: pwnagotchi accepts several images per state and picks one
-      at random — two or three `awake` variants would make Case less static
 - [ ] Screens never dressed up: startup, session summary, manual mode
 
 ## Idea: Molly, and two decks meeting
