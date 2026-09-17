@@ -342,7 +342,7 @@ Case is the only permanent face. But every few minutes something else takes
 the screen — all of it, status bars and rules included — says one thing, and
 goes.
 
-![A transmission](docs/renders/transmission.png)
+<img src="docs/renders/transmission.png" width="620" alt="Molly takes the whole screen: her name, the TRANSMISSION tag, her portrait and one line">
 
 She is not the only one who calls. The others turn up on their own; you will
 know them when you see them, and one of them does not have a face to show.
