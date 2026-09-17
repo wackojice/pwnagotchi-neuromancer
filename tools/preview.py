@@ -282,16 +282,25 @@ def rendre_intrusions(qui, polices, zoom):
         sys.exit('nothing rendered: is images/intrusions/ populated?')
 
     if len(rendus) > 1:
+        # a grid, not a strip: sixty screens stacked vertically make a sheet
+        # thirty thousand pixels tall, which no viewer will open
         marge = 6
+        colonnes = 1 if len(rendus) <= 6 else (2 if len(rendus) <= 24 else 4)
+        lignes = -(-len(rendus) // colonnes)
         planche = Image.new('L',
-                            (LARGEUR, (HAUTEUR + marge) * len(rendus) - marge),
+                            (colonnes * (LARGEUR + marge) - marge,
+                             lignes * (HAUTEUR + marge) - marge),
                             180)
         for i, img in enumerate(rendus):
-            planche.paste(img.convert('L'), (0, i * (HAUTEUR + marge)))
+            x = (i % colonnes) * (LARGEUR + marge)
+            y = (i // colonnes) * (HAUTEUR + marge)
+            planche.paste(img.convert('L'), (x, y))
+        # a big grid does not need the same magnification as a single screen
+        z = max(1, zoom if len(rendus) <= 6 else zoom // 2)
         chemin = os.path.join(SORTIE, 'planche_transmissions.png')
-        agrandir(planche, zoom).save(chemin)
-        print('\n  %d transmissions -> %s'
-              % (len(rendus), os.path.relpath(chemin, RACINE)))
+        agrandir(planche, z).save(chemin)
+        print('\n  %d transmissions, %d x %d -> %s'
+              % (len(rendus), colonnes, lignes, os.path.relpath(chemin, RACINE)))
 
 
 def main():

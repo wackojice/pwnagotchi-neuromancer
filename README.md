@@ -99,11 +99,20 @@ comes back exactly where he was.
 |---|---|
 | `INTRUSIONS_ON` | set `False` to leave Case alone |
 | `INTRUSION_SECONDS` | how long the panel holds (default: 12) |
-| `INTRUSION_MIN` / `INTRUSION_MAX` | the random wait between them, in seconds (default: 120 to 300) |
+| `INTRUSION_MIN` / `INTRUSION_MAX` | the random wait between them, in seconds (default: 120 to 600) |
+
+Four characters, fifteen lines each: six hours of watching before you have
+seen them all. The wait is deliberately wide — a narrow one lets you learn the
+rhythm without meaning to, and an intrusion you can feel coming is not one.
 
 Adding someone is a `CAST` entry and a PNG in `images/intrusions/` — no other
 code. Portraits are **88 × 92**, and a character can have several forms:
-`name_2.png`, `name_3.png`, picked at random like the face variants.
+`name_2.png`, `name_3.png`, picked at random like the face variants. Check a
+new one against every line it will carry, without hardware:
+
+```bash
+./tools/preview.py --intrusion molly
+```
 
 ## Install
 

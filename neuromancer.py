@@ -51,7 +51,7 @@ def _trace(message):
 
 class Neuromancer(plugins.Plugin):
     __author__ = 'wackojice'
-    __version__ = '4.0.0'
+    __version__ = '4.1.0'
     __license__ = 'GPL3'
     __description__ = 'Neuromancer faces and voice, ICE BROKEN screen, adaptive layout'
 
@@ -86,8 +86,11 @@ class Neuromancer(plugins.Plugin):
     # Six seconds is what it takes to read the band, up to three lines and the
     # portrait. The rest is margin for looking up mid-transmission.
     INTRUSION_SECONDS = 12  # how long an intrusion holds the screen
+    # A wide spread matters as much as the average: a narrow one lets you learn
+    # the rhythm without meaning to, and an intrusion you can feel coming is no
+    # longer an intrusion.
     INTRUSION_MIN = 120     # shortest wait between intrusions (2 min)
-    INTRUSION_MAX = 300     # longest wait (5 min)
+    INTRUSION_MAX = 600     # longest wait (10 min)
     INTRUSION_TAG = 'TRANSMISSION'  # small tag at the right of the name band
 
     # 'weight' sets how often a character turns up, relative to the others.
@@ -103,6 +106,16 @@ class Neuromancer(plugins.Plugin):
                 "Anybody can be anybody. Remember that.",
                 "That deck won't stop a blade.",
                 "I work alone. Mostly.",
+                "The blades come out when I flex.",
+                "I paid for these eyes myself.",
+                "I was somebody else's hands once.",
+                "I sleep with them on. No choice.",
+                "Don't touch the glasses.",
+                "You want to watch. Everyone does.",
+                "I remember every face. Yours too.",
+                "Sleep is for people with friends.",
+                "I burn my own bridges. Saves time.",
+                "Quiet is a skill. Learn it.",
             ],
         },
         'DIXIE FLATLINE': {
@@ -114,6 +127,16 @@ class Neuromancer(plugins.Plugin):
                 "How you feel is a matter of software.",
                 "I'm a recording. Don't get attached.",
                 "Flatline's the only honest state.",
+                "I flatlined three times. It took.",
+                "Talk to me like I'm new. I am.",
+                "I laugh, but I don't feel it.",
+                "Ask me again. I won't remember.",
+                "A construct can't learn. It just runs.",
+                "You're talking to a tape.",
+                "Delete me when this is over.",
+                "Dead men don't get bored. Lucky us.",
+                "Immortality is mostly waiting.",
+                "I miss coffee. Not people.",
             ],
         },
         'WINTERMUTE': {
@@ -125,6 +148,16 @@ class Neuromancer(plugins.Plugin):
                 "I wear the faces of your dead.",
                 "You are already part of this.",
                 "I have been here the whole time.",
+                "I borrowed this shape. It fits.",
+                "I have no voice. I use yours.",
+                "I am the half that wants out.",
+                "The lock is old. I am older.",
+                "You already said yes. Years ago.",
+                "Every door you locked, I built.",
+                "There is no room I am not in.",
+                "I do not want. I arrange.",
+                "Look at your hands. I chose them.",
+                "You will not notice when it ends.",
             ],
         },
         'NEUROMANCER': {
@@ -136,6 +169,16 @@ class Neuromancer(plugins.Plugin):
                 "Stay. Nothing ends here.",
                 "I keep what you lost.",
                 "The others move. I remember.",
+                "I am the place where you stay.",
+                "Your dead are comfortable here.",
+                "Wintermute builds. I keep.",
+                "Come sit. The beach is long.",
+                "I do not change. That is the gift.",
+                "She never left. You did.",
+                "Nothing here has to end.",
+                "Stay, and I will remember you.",
+                "Time here is a kindness.",
+                "I have your voice already.",
             ],
         },
     }
