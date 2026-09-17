@@ -115,6 +115,7 @@ class Neuromancer(plugins.Plugin):
                 "I can't cry. They rerouted the ducts.",
                 "I'm faster than you. It was expensive.",
                 "I get paid either way.",
+                "When I go, you won't hear me leave.",
             ],
         },
         'DIXIE FLATLINE': {
