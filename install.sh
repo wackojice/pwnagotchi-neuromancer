@@ -30,6 +30,11 @@ fi
 echo "==> Images -> $IMAGES_DIR"
 mkdir -p "$IMAGES_DIR"
 cp "$SOURCE"/images/*.png "$IMAGES_DIR/"
+# intrusion portraits live in a sub-folder, which *.png does not reach
+if compgen -G "$SOURCE/images/intrusions/*.png" >/dev/null; then
+    mkdir -p "$IMAGES_DIR/intrusions"
+    cp "$SOURCE"/images/intrusions/*.png "$IMAGES_DIR/intrusions/"
+fi
 
 # read via configure.py: it understands both the flat and the section layout
 PLUGINS_DIR="$(python3 "$SOURCE/tools/configure.py" "$CONFIG" plugins-dir 2>/dev/null || true)"

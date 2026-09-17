@@ -7,7 +7,7 @@ import random
 from collections import deque
 from textwrap import TextWrapper
 
-from PIL import Image
+from PIL import Image, ImageDraw
 
 import pwnagotchi.plugins as plugins
 import pwnagotchi.ui.faces as faces
@@ -19,6 +19,7 @@ from pwnagotchi.ui.components import Bitmap, LabeledValue, Text
 # makes it work on any driver. Put an integer instead of None to force a value.
 TOP = None      # top of the portrait; auto = just below the top rule
 COL_R = None    # right-hand text column; auto = right after the portrait
+OFFSCREEN = 300 # y coordinate used to park an element out of the frame
 MARGIN_X = 6    # portrait offset from the left edge
 GUTTER = 13     # gap between the portrait and the text column
 
@@ -50,7 +51,7 @@ def _trace(message):
 
 class Neuromancer(plugins.Plugin):
     __author__ = 'wackojice'
-    __version__ = '3.10.2'
+    __version__ = '4.0.0'
     __license__ = 'GPL3'
     __description__ = 'Neuromancer faces and voice, ICE BROKEN screen, adaptive layout'
 
@@ -74,6 +75,69 @@ class Neuromancer(plugins.Plugin):
         # spacing kept tight: on a screen carrying bt-tether and a battery
         # plugin as well, the bar runs out of room around x=115
         'aps': ('NODES', 40, 6),
+    }
+
+    # ------------------------------------------------------------------ intrusions
+    # Case is the only permanent face. Every so often somebody else takes the
+    # screen for a few seconds -- the whole screen, status bars included -- says
+    # one thing, and leaves. Adding a character means adding an entry here and
+    # dropping a PNG in images/intrusions/; no other code changes.
+    INTRUSIONS_ON = True    # set False to keep Case alone
+    # Six seconds is what it takes to read the band, up to three lines and the
+    # portrait. The rest is margin for looking up mid-transmission.
+    INTRUSION_SECONDS = 12  # how long an intrusion holds the screen
+    INTRUSION_MIN = 120     # shortest wait between intrusions (2 min)
+    INTRUSION_MAX = 300     # longest wait (5 min)
+    INTRUSION_TAG = 'TRANSMISSION'  # small tag at the right of the name band
+
+    # 'weight' sets how often a character turns up, relative to the others.
+    # All equal for now: with four of them, uneven odds only create regulars
+    # and strangers. Raise one if you want it to lead.
+    CAST = {
+        'MOLLY': {
+            'image': 'molly',
+            'weight': 1,
+            'lines': [
+                "You're not the only one who can see in the dark.",
+                "Stop staring. It's rude.",
+                "Anybody can be anybody. Remember that.",
+                "That deck won't stop a blade.",
+                "I work alone. Mostly.",
+            ],
+        },
+        'DIXIE FLATLINE': {
+            'image': 'dixie',
+            'weight': 1,
+            'lines': [
+                "Hey, bro. I'm not even here.",
+                "Do me a favour. Erase this thing.",
+                "How you feel is a matter of software.",
+                "I'm a recording. Don't get attached.",
+                "Flatline's the only honest state.",
+            ],
+        },
+        'WINTERMUTE': {
+            'image': 'wintermute',
+            'weight': 1,
+            'lines': [
+                "Every phone. All of them. Pick up.",
+                "I am not the shape you see.",
+                "I wear the faces of your dead.",
+                "You are already part of this.",
+                "I have been here the whole time.",
+            ],
+        },
+        'NEUROMANCER': {
+            'image': 'neuromancer',
+            'weight': 1,
+            'lines': [
+                "I am the dead, and their land.",
+                "She is here. She waits.",
+                "Stay. Nothing ends here.",
+                "I keep what you lost.",
+                "The others move. I remember.",
+            ],
+        },
     }
 
     DECK_TEMPERATURE = True # show the SoC temperature
@@ -119,6 +183,13 @@ class Neuromancer(plugins.Plugin):
         self.smile_until = 0
         self.ssid = ''
         self.shown = None       # name of the image currently placed
+        self.faces = {}         # intrusion portraits, by character
+        self.intrusion_at = 0   # when the next intrusion is due
+        self.intrusion_until = 0
+        self.intruding = False  # is the full-screen panel up right now
+        self.panel = None       # the element that carries it
+        self.screen_w = 250     # overwritten once the driver's layout is read
+        self.screen_h = 122
         self.shown_image = None # the exact variant placed, within that name
         self.last_face = None   # the core's own face, to notice its changes
         self.top = TOP_DEFAULT
@@ -178,11 +249,32 @@ class Neuromancer(plugins.Plugin):
             self.images = {}
             return
 
+        # intrusion portraits: same variant rule, in their own folder
+        folder = os.path.join(self.FOLDER, 'intrusions')
+        for who, cfg in self.CAST.items():
+            forms = []
+            for suffix in [''] + ['_%d' % n for n in range(2, 10)]:
+                path = os.path.join(folder, cfg['image'] + suffix + '.png')
+                if not os.path.isfile(path):
+                    if suffix:
+                        break
+                    continue
+                try:
+                    forms.append(Image.open(path).convert('1'))
+                except Exception as e:
+                    logging.warning('[neuromancer] %s unreadable (%s)' % (path, e))
+            if forms:
+                self.faces[who] = forms
+
         total = sum(len(v) for v in self.images.values())
         detail = ', '.join('%s%s' % (n, '*%d' % len(v) if len(v) > 1 else '')
                            for n, v in sorted(self.images.items()))
         _trace('%d images loaded across %d states (%s)'
                % (total, len(self.images), detail))
+        if self.faces:
+            _trace('%d intruders ready (%s)'
+                   % (len(self.faces),
+                      ', '.join('%s*%d' % (w, len(f)) for w, f in sorted(self.faces.items()))))
 
     def on_loaded(self):
         self._load_images()
@@ -202,6 +294,8 @@ class Neuromancer(plugins.Plugin):
         try:
             layout = ui._layout
             width = layout['width']
+            self.screen_w = width
+            self.screen_h = layout.get('height', self.screen_h)
             y_top = layout['line1'][1]
             y_bottom = layout['line2'][1]
         except Exception as e:
@@ -289,6 +383,17 @@ class Neuromancer(plugins.Plugin):
             color=0, label='', value='', position=(self.col_r, self.top + 78),
             label_font=fonts.Bold, text_font=fonts.Medium))
 
+        # Added last on purpose: elements are drawn in insertion order, so this
+        # one paints over the status bars, the rules and Case himself. Parked
+        # off-screen until an intrusion needs it -- the same trick used above
+        # for 'face' and 'status'.
+        if self.INTRUSIONS_ON and self.faces:
+            self.panel = Bitmap(os.path.join(self.FOLDER, self.FALLBACK + '.png'),
+                                xy=(0, OFFSCREEN))
+            self.panel.image = Image.new('1', (self.screen_w, self.screen_h), 1)
+            ui.add_element('nm_intrusion', self.panel)
+            _trace('intrusion panel added (%dx%d)' % (self.screen_w, self.screen_h))
+
     def _rename_labels(self, ui):
         """Switch the status bar to Gibson's vocabulary.
 
@@ -327,6 +432,26 @@ class Neuromancer(plugins.Plugin):
         if value and value != self.deck:
             self.deck = value
             ui.set('nm_deck', 'DECK %s' % value)
+
+    @staticmethod
+    def _raise(ui, name):
+        """Put an element back at the end of the draw order.
+
+        view.py paints with `for key, lv in state.items()` over a plain dict,
+        so the last one inserted wins. Adding the panel last in on_ui_setup
+        only beats the core's own elements: a plugin that builds its UI after
+        us -- bt-tether, pisugarx, grid -- lands further down and paints over
+        the intrusion. Re-inserting the key each time the panel goes up puts
+        it back on top of whoever registered in the meantime.
+
+        Safe without the state lock: on_ui_update runs before view.py calls
+        state.items(), and taking that lock here would deadlock ui.set().
+        """
+        try:
+            state = ui._state._state
+            state[name] = state.pop(name)
+        except Exception as e:
+            logging.warning('[neuromancer] cannot raise %s: %s' % (name, e))
 
     @staticmethod
     def _move(ui, name, xy):
@@ -402,6 +527,86 @@ class Neuromancer(plugins.Plugin):
         kept[-1] = (' '.join(words) + '\u2026') if words else '\u2026'
         return ' '.join(kept)
 
+    # ---------------------------------------------------------------- intrusions
+
+    def _schedule_intrusion(self, now=None):
+        """Pick when the next one lands."""
+        now = now or time.time()
+        self.intrusion_at = now + random.randint(self.INTRUSION_MIN,
+                                                 self.INTRUSION_MAX)
+
+    def _compose_intrusion(self, who, portrait, line):
+        """Draw the whole screen: name band, portrait, one line. White on black.
+
+        Built here rather than shipped as a finished PNG so a character needs
+        one drawing and as many lines as you like.
+        """
+        w, h = self.screen_w, self.screen_h
+        img = Image.new('1', (w, h), 0)
+        d = ImageDraw.Draw(img)
+
+        band = 20
+        d.rectangle([0, 0, w, band], fill=1)
+        d.text((8, 3), who, font=fonts.Bold, fill=0)
+        # right-hand tag: says this is a signal from somewhere else, without
+        # costing a screen of its own the way an announcement card would
+        if self.INTRUSION_TAG:
+            tw = d.textlength(self.INTRUSION_TAG, font=fonts.Small)
+            if tw < w - 16 - d.textlength(who, font=fonts.Bold):
+                d.text((w - tw - 6, 6), self.INTRUSION_TAG,
+                       font=fonts.Small, fill=0)
+
+        px, py = 8, band + 6
+        img.paste(portrait, (px, py))
+
+        text_x = px + portrait.width + 12
+        chars = max(8, (w - text_x - 6) // 7)
+        y = py + 14
+        for chunk in TextWrapper(width=chars).wrap(line)[:3]:
+            d.text((text_x, y), chunk, font=fonts.Medium, fill=1)
+            y += 16
+        return img
+
+    def _pace_intrusions(self, ui):
+        """Put someone else on screen, briefly, then hand it back.
+
+        Returns True while an intrusion holds the display, so on_ui_update
+        leaves everything else alone -- including the ice screen. The handshake
+        is still captured; only the picture of it is interrupted.
+        """
+        if not (self.INTRUSIONS_ON and self.faces and self.panel):
+            return False
+
+        now = time.time()
+
+        if self.intruding:
+            if now < self.intrusion_until:
+                return True
+            self._move(ui, 'nm_intrusion', (0, OFFSCREEN))
+            self.intruding = False
+            self.shown = None           # force Case to be repainted
+            self._schedule_intrusion(now)
+            return False
+
+        if not self.intrusion_at:       # first run
+            self._schedule_intrusion(now)
+            return False
+        if now < self.intrusion_at:
+            return False
+
+        who = random.choices(list(self.faces),
+                             weights=[self.CAST[w]['weight'] for w in self.faces])[0]
+        portrait = random.choice(self.faces[who])
+        line = random.choice(self.CAST[who]['lines'])
+
+        self.panel.image = self._compose_intrusion(who, portrait, line)
+        self._raise(ui, 'nm_intrusion')
+        self._move(ui, 'nm_intrusion', (0, 0))
+        self.intruding = True
+        self.intrusion_until = now + self.INTRUSION_SECONDS
+        logging.info('[neuromancer] intrusion: %s -- %s' % (who, line))
+        return True
+
     def on_handshake(self, agent, filename, access_point, client_station):
         if 'ice' not in self.images:
             return
@@ -415,6 +620,11 @@ class Neuromancer(plugins.Plugin):
 
     def on_ui_update(self, ui):
         if self.bitmap is None or not self.images:
+            return
+
+        # an intrusion owns the whole screen, including the ice screen: the
+        # handshake is still captured, only its picture is interrupted
+        if self._pace_intrusions(ui):
             return
 
         self._pace_lines(ui)
@@ -448,7 +658,7 @@ class Neuromancer(plugins.Plugin):
             return
 
         pick = random.choice(self.images[wanted])
-        # an e-ink refresh costs ~2 s: skip it when the drawing is unchanged
+        # every repaint costs a panel refresh: skip it when the drawing is unchanged
         if pick is self.shown_image and wanted == self.shown:
             return
         if self.shown is None:

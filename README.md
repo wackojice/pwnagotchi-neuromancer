@@ -30,6 +30,7 @@ lays it out. The rest turn up as your pwnagotchi lives its day, including the
 - [Uninstall](#uninstall)
 - [The faces](#the-faces)
 - [The voice](#the-voice)
+- [Transmissions](#transmissions)
 - [Credits](#credits)
 
 Deeper, in `docs/`:
@@ -334,6 +335,31 @@ $EDITOR locale/neuromancer/LC_MESSAGES/voice.po
 msgfmt -o locale/neuromancer/LC_MESSAGES/voice.mo \
        locale/neuromancer/LC_MESSAGES/voice.po
 ```
+
+## Transmissions
+
+Case is the only permanent face. But every few minutes something else takes
+the screen — all of it, status bars and rules included — says one thing, and
+goes.
+
+![A transmission](docs/renders/transmission.png)
+
+She is not the only one who calls. The others turn up on their own; you will
+know them when you see them, and one of them does not have a face to show.
+
+An intrusion outranks everything, the ICE BROKEN screen included: the
+handshake is still captured, only the picture of it is interrupted. Then Case
+comes back exactly where he was.
+
+| Constant | Purpose |
+|---|---|
+| `INTRUSIONS_ON` | set `False` to leave Case alone |
+| `INTRUSION_SECONDS` | how long the panel holds (default: 12) |
+| `INTRUSION_MIN` / `INTRUSION_MAX` | the random wait between them, in seconds (default: 120 to 300) |
+
+Adding someone is a `CAST` entry and a PNG in `images/intrusions/` — no other
+code. Portraits are **88 × 92**, and a character can have several forms:
+`name_2.png`, `name_3.png`, picked at random like the face variants.
 
 ## Credits
 

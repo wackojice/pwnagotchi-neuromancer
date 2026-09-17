@@ -7,7 +7,7 @@ The `face` element is not removed — the core keeps writing to it — it is sim
 moved outside the visible frame. `name` is pulled into the right-hand column to
 free up room for the portrait.
 
-An e-ink refresh costs about two seconds, so the plugin only repaints when the
+Every repaint costs a panel refresh, so the plugin only repaints when the
 image actually changes, never on every `on_ui_update` call.
 
 **Lines stay readable.** pwnagotchi replaces its status on every event, and
@@ -20,14 +20,24 @@ dropped rather than letting the display fall behind reality.
 
 Writing back into `status` would be simpler but causes a refresh loop: each
 write marks a change, which triggers a render, which calls the plugin again. On
-e-ink at two seconds per refresh the screen would flicker endlessly. The plugin
-never touches it.
+e-ink the screen would flicker endlessly. The plugin never touches it.
 
 **Image loading is thread-safe.** pwnagotchi runs `on_loaded` in a separate
 thread while the main thread builds the UI, so `on_ui_setup` can run *before*
 the images exist. Both call the same idempotent loader, guarded by a lock.
 This ordering was the bug that kept the portrait invisible on first install —
 found only by tracing to the boot partition on real hardware.
+
+**An intrusion has to be drawn last.** `view.py` paints with
+`for key, lv in state.items()` over a plain dict, so the element inserted last
+is the one on top, and `Bitmap.draw` pastes without a mask, so a full-screen
+bitmap is opaque. Adding the panel last in `on_ui_setup` is not enough: it only
+beats the core's own elements. A plugin that builds its UI *after* us —
+bt-tether, pisugarx, grid — lands further down the dict and paints straight
+over the transmission. The fix re-inserts the key every time the panel goes up,
+which also catches a plugin that rebuilds its element in between. Found on
+hardware as a stray `BT -` across a character's name band.
+
 
 # Preview without hardware
 

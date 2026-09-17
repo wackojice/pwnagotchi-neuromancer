@@ -31,15 +31,32 @@ if [[ ! -f "$CONFIG" ]]; then
 fi
 
 echo "==> Target: $SD_ROOT"
-# both config styles: flat keys, or [sections] with bare keys
-grep -E '^\s*(main\.)?name *=|^\s*(ui\.display\.)?type *=|^\s*(ui\.)?invert *=' \
-     "$CONFIG" 2>/dev/null | head -4 | sed 's/^/    /' || true
+# Report what we are about to touch. Both config styles are in the wild:
+# flat dotted keys, or [sections] with bare keys. A bare key only counts when
+# it sits in the section it belongs to -- otherwise 'name' under [ui.font]
+# gets reported as the unit's name.
+awk -F= '
+    /^[[:space:]]*\[/ { section = $0; gsub(/[][[:space:]]/, "", section); next }
+    {
+        key = $1; gsub(/[[:space:]]/, "", key)
+        full = (key ~ /\./) ? key : (section == "" ? key : section "." key)
+        if (full == "main.name" || full == "ui.display.type" || full == "ui.invert") {
+            value = $2; sub(/^[[:space:]]+/, "", value)
+            printf "    %s = %s\n", full, value
+        }
+    }
+' "$CONFIG" 2>/dev/null || true
 
 # --- images
 DEST_IMG="$SD_ROOT/usr/local/share/neuromancer"
 echo "==> Images -> /usr/local/share/neuromancer"
 mkdir -p "$DEST_IMG"
 cp "$SOURCE"/images/*.png "$DEST_IMG/"
+# intrusion portraits live in a sub-folder, which *.png does not reach
+if compgen -G "$SOURCE/images/intrusions/*.png" >/dev/null; then
+    mkdir -p "$DEST_IMG/intrusions"
+    cp "$SOURCE"/images/intrusions/*.png "$DEST_IMG/intrusions/"
+fi
 
 # --- plugin
 # The scanned directory depends on the version: main.custom_plugins is
