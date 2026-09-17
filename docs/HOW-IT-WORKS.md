@@ -28,6 +28,22 @@ the images exist. Both call the same idempotent loader, guarded by a lock.
 This ordering was the bug that kept the portrait invisible on first install —
 found only by tracing to the boot partition on real hardware.
 
+**A transmission takes the screen by short-circuiting the update.**
+`_pace_intrusions()` runs first in `on_ui_update` and returns `True` for as
+long as it holds the display, so nothing below it runs — not the line queue,
+not the deck reading, not even the ICE BROKEN screen. The handshake is still
+captured; only the picture of it is interrupted. When the time is up the panel
+is parked off-screen at `(0, 300)`, `self.shown` is cleared so Case is
+repainted rather than assumed to be still there, and the next intrusion is
+scheduled.
+
+**The panel is composed at runtime, not shipped as finished images.** A
+character costs one drawing and as many lines as you like: `_compose_intrusion`
+builds the name band, pastes the portrait and wraps the line to the width left
+beside it. Shipping ready-made screens would mean one PNG per character *per
+line*, and adding a reply would mean redrawing. Characters can have several
+forms — `name_2.png`, `name_3.png` — picked at random like the face variants.
+
 **An intrusion has to be drawn last.** `view.py` paints with
 `for key, lv in state.items()` over a plain dict, so the element inserted last
 is the one on top, and `Bitmap.draw` pastes without a mask, so a full-screen
@@ -37,7 +53,6 @@ bt-tether, pisugarx, grid — lands further down the dict and paints straight
 over the transmission. The fix re-inserts the key every time the panel goes up,
 which also catches a plugin that rebuilds its element in between. Found on
 hardware as a stray `BT -` across a character's name band.
-
 
 # Preview without hardware
 
