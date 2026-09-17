@@ -9,6 +9,9 @@ coordinates, same fonts, same 1-bit mode. Writes an enlarged PNG.
     ./tools/preview.py awake           # a single state, enlarged
     ./tools/preview.py ice --zoom 6
 
+    ./tools/preview.py --intrusion           # every character, every line
+    ./tools/preview.py --intrusion molly     # one character, one line each
+
 Output goes to preview/ (git-ignored).
 """
 
@@ -22,6 +25,8 @@ from PIL import Image, ImageDraw, ImageFont
 
 RACINE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 IMAGES = os.path.join(RACINE, 'images')
+INTRUSIONS = os.path.join(IMAGES, 'intrusions')
+PLUGIN = os.path.join(RACINE, 'neuromancer.py')
 SORTIE = os.path.join(RACINE, 'preview')
 
 # --- waveshare2in13_V2 layout, copied from pwnagotchi/ui/hw/waveshare2in13_V2.py
@@ -41,6 +46,11 @@ HAUT = 16
 COL_D = 95
 MAX_STATUS = 20   # layout['status']['max'] from the V2 driver
 PORTRAIT_X = 6
+
+# --- intrusion panel, mirrored from _compose_intrusion in neuromancer.py
+BANDEAU = 20      # height of the white name band
+TAG = 'TRANSMISSION'
+MAX_LIGNES_INTRUSION = 3
 
 # --- sample texts
 # labels as the plugin rewrites them (see LABELS in neuromancer.py)
@@ -173,9 +183,115 @@ def composer(etat, polices, _, ssid='LINKSYS_5G'):
     return ecran
 
 
+def lire_cast():
+    """Read CAST straight out of neuromancer.py, without importing it.
+
+    The plugin needs pwnagotchi to import; this tool deliberately does not, so
+    it can run on a laptop. Parsing the class attribute keeps the characters
+    and their lines in exactly one place: add someone to CAST and they show up
+    here with no change to this file.
+    """
+    import ast
+    tree = ast.parse(open(PLUGIN, encoding='utf-8').read())
+    cls = next(n for n in tree.body
+               if isinstance(n, ast.ClassDef) and n.name == 'Neuromancer')
+    for node in cls.body:
+        if (isinstance(node, ast.Assign) and node.targets
+                and getattr(node.targets[0], 'id', None) == 'CAST'):
+            return ast.literal_eval(node.value)
+    sys.exit('CAST not found in %s' % os.path.relpath(PLUGIN, RACINE))
+
+
+def formes(image):
+    """Every drawing for one character: name.png, name_2.png, ... in order."""
+    trouvees = []
+    for suffixe in [''] + ['_%d' % n for n in range(2, 10)]:
+        chemin = os.path.join(INTRUSIONS, image + suffixe + '.png')
+        if not os.path.isfile(chemin):
+            if suffixe:
+                break          # stop at the first gap, like the plugin
+            continue
+        trouvees.append((os.path.basename(chemin), Image.open(chemin).convert('1')))
+    return trouvees
+
+
+def composer_intrusion(qui, portrait, replique, polices):
+    """Render one transmission: white on black, the whole screen.
+
+    Mirrors _compose_intrusion in neuromancer.py. Kept in step by hand, like
+    the rest of this file mirrors the plugin's layout -- if a transmission
+    ever looks different on the glass, this is the first place to look.
+    """
+    ecran = Image.new('1', (LARGEUR, HAUTEUR), 0)   # 0 = noir
+    d = ImageDraw.Draw(ecran)
+
+    d.rectangle([0, 0, LARGEUR, BANDEAU], fill=1)
+    d.text((8, 3), qui, font=polices['bold'], fill=0)
+    if TAG:
+        largeur_tag = d.textlength(TAG, font=polices['small'])
+        if largeur_tag < LARGEUR - 16 - d.textlength(qui, font=polices['bold']):
+            d.text((LARGEUR - largeur_tag - 6, 6), TAG,
+                   font=polices['small'], fill=0)
+
+    px, py = 8, BANDEAU + 6
+    ecran.paste(portrait, (px, py))
+
+    text_x = px + portrait.width + 12
+    chars = max(8, (LARGEUR - text_x - 6) // 7)
+    y = py + 14
+    for morceau in TextWrapper(width=chars).wrap(replique)[:MAX_LIGNES_INTRUSION]:
+        d.text((text_x, y), morceau, font=polices['medium'], fill=1)
+        y += 16
+    return ecran
+
+
 def agrandir(img, zoom):
     return img.convert('L').resize(
         (img.width * zoom, img.height * zoom), Image.NEAREST)
+
+
+def rendre_intrusions(qui, polices, zoom):
+    """Render every line of every form, so a new drawing can be judged."""
+    cast = lire_cast()
+
+    if qui != '*':
+        cle = next((k for k in cast if k.lower() == qui.lower()
+                    or cast[k]['image'].lower() == qui.lower()), None)
+        if cle is None:
+            sys.exit('unknown character: %s\n  known: %s'
+                     % (qui, ', '.join(sorted(c.lower() for c in cast))))
+        cast = {cle: cast[cle]}
+
+    rendus = []
+    for nom, cfg in cast.items():
+        dessins = formes(cfg['image'])
+        if not dessins:
+            print('  ! no drawing for %s (looked for %s.png)' % (nom, cfg['image']))
+            continue
+        for i, replique in enumerate(cfg['lines'], 1):
+            # cycle through the forms so every drawing gets shown
+            fichier, portrait = dessins[(i - 1) % len(dessins)]
+            img = composer_intrusion(nom, portrait, replique, polices)
+            base = '%s_%d' % (cfg['image'], i)
+            chemin = os.path.join(SORTIE, 'transmission_%s.png' % base)
+            agrandir(img, zoom).save(chemin)
+            print('  %-14s %-18s %s' % (nom, fichier, replique))
+            rendus.append(img)
+
+    if not rendus:
+        sys.exit('nothing rendered: is images/intrusions/ populated?')
+
+    if len(rendus) > 1:
+        marge = 6
+        planche = Image.new('L',
+                            (LARGEUR, (HAUTEUR + marge) * len(rendus) - marge),
+                            180)
+        for i, img in enumerate(rendus):
+            planche.paste(img.convert('L'), (0, i * (HAUTEUR + marge)))
+        chemin = os.path.join(SORTIE, 'planche_transmissions.png')
+        agrandir(planche, zoom).save(chemin)
+        print('\n  %d transmissions -> %s'
+              % (len(rendus), os.path.relpath(chemin, RACINE)))
 
 
 def main():
@@ -183,10 +299,18 @@ def main():
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument('etat', nargs='?', help='state to render (default: all)')
     p.add_argument('--zoom', type=int, default=4, help='zoom factor')
+    p.add_argument('--intrusion', nargs='?', const='*', metavar='WHO',
+                   help='render transmissions instead of faces; '
+                        'name a character, or omit for all of them')
     args = p.parse_args()
 
     os.makedirs(SORTIE, exist_ok=True)
     polices = charger_polices()
+
+    if args.intrusion:
+        rendre_intrusions(args.intrusion, polices, args.zoom)
+        return
+
     _ = charger_voix()
 
     etats = ([args.etat] if args.etat else

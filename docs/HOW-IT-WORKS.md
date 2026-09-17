@@ -60,9 +60,16 @@ The repo ships a tool that recomposes the 250 × 122 screen exactly like the
 `waveshare2in13_V2` layout — same coordinates, same fonts, same 1-bit mode:
 
 ```bash
-./tools/preview.py                # every state, plus a contact sheet
-./tools/preview.py ice --zoom 6   # one state, enlarged
+./tools/preview.py                     # every state, plus a contact sheet
+./tools/preview.py ice --zoom 6        # one state, enlarged
+./tools/preview.py --intrusion         # every character, every line
+./tools/preview.py --intrusion molly   # one character
 ```
+
+The `--intrusion` mode reads `CAST` out of `neuromancer.py` rather than
+repeating it, so a character you add there turns up here with no change to the
+tool. It renders every line of every form, cycling through a character's
+drawings, which is how you check a new portrait before it ever reaches a card.
 
 PNGs land in `preview/` (git-ignored). Needs Pillow, and `DejaVuSansMono` for a
 faithful render (`sudo pacman -S ttf-dejavu` on Arch, `fonts-dejavu` on Debian)

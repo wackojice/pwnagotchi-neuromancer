@@ -32,6 +32,31 @@ Two more things, learned by throwing drawings away:
   the silhouette shifted — a face 4 px lower, lenses a different shape. In
   isolation they looked fine; alternating with the original, the head jumps.
 
+# Drawing an intruder
+
+Transmission portraits follow different rules from Case's faces, because they
+sit on a black panel instead of the white screen.
+
+- **88 × 92**, in `images/intrusions/`, named after the `image` key of the
+  character's `CAST` entry in `neuromancer.py`.
+- **White line art on black.** The panel is filled black and the portrait is
+  pasted straight onto it, so the drawing carries its own polarity — the
+  opposite of a face. The shipped ones run from 6 % white (a payphone, almost
+  all shadow) to 34 %.
+- **No two-axis grammar.** A face has to say a machine state in the visor and a
+  mood in the mouth. An intruder says one thing and leaves, so the whole frame
+  is free.
+- **Several forms are allowed**, `name_2.png`, `name_3.png`, picked at random
+  like face variants. Wintermute has three, which suits someone with no shape
+  of his own — and unlike a face, they do not have to keep the same silhouette.
+
+Check a new drawing against every one of the character's lines before it ever
+reaches a card:
+
+```bash
+./tools/preview.py --intrusion molly
+```
+
 ---
 
 [Back to the README](../README.md)
