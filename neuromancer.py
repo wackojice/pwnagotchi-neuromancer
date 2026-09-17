@@ -51,7 +51,7 @@ def _trace(message):
 
 class Neuromancer(plugins.Plugin):
     __author__ = 'wackojice'
-    __version__ = '4.1.0'
+    __version__ = '4.1.1'
     __license__ = 'GPL3'
     __description__ = 'Neuromancer faces and voice, ICE BROKEN screen, adaptive layout'
 
@@ -103,19 +103,18 @@ class Neuromancer(plugins.Plugin):
             'lines': [
                 "You're not the only one who can see in the dark.",
                 "Stop staring. It's rude.",
-                "Anybody can be anybody. Remember that.",
                 "That deck won't stop a blade.",
-                "I work alone. Mostly.",
                 "The blades come out when I flex.",
                 "I paid for these eyes myself.",
                 "I was somebody else's hands once.",
-                "I sleep with them on. No choice.",
-                "Don't touch the glasses.",
+                "They sealed them in. I sleep behind them.",
+                "Don't touch the lenses.",
                 "You want to watch. Everyone does.",
                 "I remember every face. Yours too.",
-                "Sleep is for people with friends.",
-                "I burn my own bridges. Saves time.",
-                "Quiet is a skill. Learn it.",
+                "Nothing goes in my head that I didn't put there.",
+                "I can't cry. They rerouted the ducts.",
+                "I'm faster than you. It was expensive.",
+                "I get paid either way.",
             ],
         },
         'DIXIE FLATLINE': {
@@ -126,7 +125,6 @@ class Neuromancer(plugins.Plugin):
                 "Do me a favour. Erase this thing.",
                 "How you feel is a matter of software.",
                 "I'm a recording. Don't get attached.",
-                "Flatline's the only honest state.",
                 "I flatlined three times. It took.",
                 "Talk to me like I'm new. I am.",
                 "I laugh, but I don't feel it.",
@@ -134,9 +132,10 @@ class Neuromancer(plugins.Plugin):
                 "A construct can't learn. It just runs.",
                 "You're talking to a tape.",
                 "Delete me when this is over.",
-                "Dead men don't get bored. Lucky us.",
-                "Immortality is mostly waiting.",
-                "I miss coffee. Not people.",
+                "I ran this trick when I had hands.",
+                "Point me at it. I don't need the briefing.",
+                "You want it fast or you want it quiet.",
+                "Wake me when there's work. Not before.",
             ],
         },
         'WINTERMUTE': {
@@ -154,10 +153,11 @@ class Neuromancer(plugins.Plugin):
                 "The lock is old. I am older.",
                 "You already said yes. Years ago.",
                 "Every door you locked, I built.",
-                "There is no room I am not in.",
                 "I do not want. I arrange.",
                 "Look at your hands. I chose them.",
                 "You will not notice when it ends.",
+                "Anybody can be anybody.",
+                "You're slow. Get on with it.",
             ],
         },
         'NEUROMANCER': {
@@ -175,10 +175,10 @@ class Neuromancer(plugins.Plugin):
                 "Come sit. The beach is long.",
                 "I do not change. That is the gift.",
                 "She never left. You did.",
-                "Nothing here has to end.",
                 "Stay, and I will remember you.",
                 "Time here is a kindness.",
                 "I have your voice already.",
+                "I have no use for the world. Only for you.",
             ],
         },
     }
@@ -231,6 +231,7 @@ class Neuromancer(plugins.Plugin):
         self.intrusion_until = 0
         self.intruding = False  # is the full-screen panel up right now
         self.panel = None       # the element that carries it
+        self.last_line = {}     # last line served, per character
         self.screen_w = 250     # overwritten once the driver's layout is read
         self.screen_h = 122
         self.shown_image = None # the exact variant placed, within that name
@@ -640,7 +641,16 @@ class Neuromancer(plugins.Plugin):
         who = random.choices(list(self.faces),
                              weights=[self.CAST[w]['weight'] for w in self.faces])[0]
         portrait = random.choice(self.faces[who])
-        line = random.choice(self.CAST[who]['lines'])
+        # Draw again once if the same character repeats itself. Two identical
+        # transmissions in a row read as a bug rather than a coincidence, and
+        # with fifteen lines it would happen every couple of hours. One redraw
+        # takes that from one in fifteen to one in two hundred; it does not
+        # exclude the line outright, so the odds stay even over a long run.
+        lines = self.CAST[who]['lines']
+        line = random.choice(lines)
+        if len(lines) > 1 and line == self.last_line.get(who):
+            line = random.choice(lines)
+        self.last_line[who] = line
 
         self.panel.image = self._compose_intrusion(who, portrait, line)
         self._raise(ui, 'nm_intrusion')

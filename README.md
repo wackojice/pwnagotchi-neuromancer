@@ -101,9 +101,10 @@ comes back exactly where he was.
 | `INTRUSION_SECONDS` | how long the panel holds (default: 12) |
 | `INTRUSION_MIN` / `INTRUSION_MAX` | the random wait between them, in seconds (default: 120 to 600) |
 
-Four characters, fifteen lines each: six hours of watching before you have
-seen them all. The wait is deliberately wide — a narrow one lets you learn the
-rhythm without meaning to, and an intrusion you can feel coming is not one.
+Four characters, sixty lines between them: six hours of watching before you
+have seen them all, and nobody repeats themselves twice running. The wait is
+deliberately wide — a narrow one lets you learn the rhythm without meaning to,
+and an intrusion you can feel coming is not one.
 
 Adding someone is a `CAST` entry and a PNG in `images/intrusions/` — no other
 code. Portraits are **88 × 92**, and a character can have several forms:
