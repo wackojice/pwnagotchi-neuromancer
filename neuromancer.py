@@ -51,7 +51,7 @@ def _trace(message):
 
 class Neuromancer(plugins.Plugin):
     __author__ = 'wackojice'
-    __version__ = '4.1.1'
+    __version__ = '4.1.2'
     __license__ = 'GPL3'
     __description__ = 'Neuromancer faces and voice, ICE BROKEN screen, adaptive layout'
 
@@ -489,12 +489,26 @@ class Neuromancer(plugins.Plugin):
         the intrusion. Re-inserting the key each time the panel goes up puts
         it back on top of whoever registered in the meantime.
 
-        Safe without the state lock: on_ui_update runs before view.py calls
-        state.items(), and taking that lock here would deadlock ui.set().
+        Build a new dict rather than reordering the live one. view.py takes
+        the state lock only to obtain `state.items()`, then iterates that view
+        with the lock released -- and since 2.9.5.9 every plugin callback runs
+        on its own worker thread, so a pop/insert here can land in the middle
+        of a render and raise "dictionary changed size during iteration".
+        Locking would not help: the loop is outside the lock either way.
+
+        Rebinding the attribute is atomic, so an in-flight render finishes on
+        the old dict, untouched, and the next one sees the new order. The
+        element objects are shared between the two dicts, so a concurrent
+        ui.set() writes to the same widget and is not lost.
         """
         try:
-            state = ui._state._state
-            state[name] = state.pop(name)
+            state = ui._state
+            current = state._state
+            if name not in current:
+                raise KeyError(name)
+            ordered = {key: value for key, value in current.items() if key != name}
+            ordered[name] = current[name]
+            state._state = ordered
         except Exception as e:
             logging.warning('[neuromancer] cannot raise %s: %s' % (name, e))
 
